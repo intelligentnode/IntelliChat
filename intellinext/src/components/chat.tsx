@@ -8,6 +8,18 @@ import Container from './container';
 
 type Props = {};
 
+function fakePostMessage(message: Message): Promise<Message> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        id: nanoid(),
+        content: 'This is a dummy response',
+        role: 'assistant',
+      });
+    }, 1000);
+  });
+}
+
 export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([
     {
@@ -24,18 +36,27 @@ export default function Chat() {
   const input = React.useRef<HTMLTextAreaElement>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
+  function appendMessage(message: Message) {
+    setMessages((messages) => [...messages, message]);
+  }
+
   const onSubmit = async () => {
     const inputText = input.current?.value;
     if (!inputText) return;
 
-    setMessages((messages) => [
-      ...messages,
-      {
-        id: nanoid(),
-        content: inputText,
-        role: 'user',
-      },
-    ]);
+    const prompt = {
+      id: nanoid(),
+      content: inputText,
+      role: 'user',
+    } as Message;
+
+    input.current!.value = '';
+    appendMessage(prompt);
+    setIsLoading(true);
+
+    const response = await fakePostMessage(prompt);
+    appendMessage(response);
+    setIsLoading(false);
   };
 
   return (
