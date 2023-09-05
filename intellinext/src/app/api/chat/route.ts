@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { Chatbot, ChatGPTInput, LLamaReplicateInput } from 'intellinode';
+import { Chatbot } from 'intellinode';
 import { chatbotValidator } from '@/lib/validators';
+import { addMessages, getChatInput } from '@/lib/intellinode';
 
 export async function POST(req: Request) {
   const json = await req.json();
@@ -38,12 +39,9 @@ export async function POST(req: Request) {
     const input = getChatInput(provider, systemMessage);
     addMessages(input, messages);
     const response = await chatbot.chat(input);
-    const responseMsgs = response.messages.map((msg: string) => ({
-      content: msg,
-      role: 'assistant',
-    }));
+    const responseMsgs = response.messages.map((msg: string) => msg);
 
-    return NextResponse.json({ messages: responseMsgs });
+    return NextResponse.json({ messages: 'hi' });
   } catch (e) {
     return NextResponse.json(
       {
@@ -52,30 +50,4 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-}
-
-function getChatInput(provider: string, systemMessage: string) {
-  if (provider === 'openai') {
-    return new ChatGPTInput(systemMessage);
-  } else if (provider === 'replicate') {
-    return new LLamaReplicateInput(systemMessage);
-  } else {
-    throw new Error('provider is not supported');
-  }
-}
-
-function addMessages(
-  chatInput: ChatGPTInput | LLamaReplicateInput,
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[]
-) {
-  messages.forEach((m) => {
-    if (m.role === 'user') {
-      chatInput.addUserMessage(m.content);
-    } else {
-      chatInput.addAssistantMessage(m.content);
-    }
-  });
 }
