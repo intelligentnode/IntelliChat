@@ -24,8 +24,20 @@ export default function Chat() {
         method: 'POST',
         body: JSON.stringify({ ...message }),
       });
-      const json = await res.json();
-      console.log(json);
+      const json: { response: string } = await res.json();
+      return json;
+    },
+    onSuccess: (data) => {
+      const { response } = data;
+      if (!response) return;
+      setMessages((messages) => [
+        ...messages,
+        {
+          id: nanoid(),
+          content: response,
+          role: 'assistant',
+        },
+      ]);
     },
   });
 
