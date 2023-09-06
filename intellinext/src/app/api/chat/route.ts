@@ -39,9 +39,8 @@ export async function POST(req: Request) {
     const input = getChatInput(provider, systemMessage);
     addMessages(input, messages);
     const response = await chatbot.chat(input);
-    const responseMsgs = response.messages.map((msg: string) => msg);
 
-    return NextResponse.json({ messages: 'hi' });
+    return NextResponse.json({ response: response[0] });
   } catch (e) {
     return NextResponse.json(
       {
