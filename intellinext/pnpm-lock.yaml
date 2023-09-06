@@ -32,8 +32,8 @@ dependencies:
     specifier: 13.4.19
     version: 13.4.19(eslint@8.48.0)(typescript@5.2.2)
   intellinode:
-    specifier: ^1.3.9
-    version: 1.3.9
+    specifier: ^1.4.0
+    version: 1.4.0
   lucide-react:
     specifier: ^0.274.0
     version: 0.274.0(react@18.2.0)
@@ -1583,8 +1583,8 @@ packages:
     resolution: {integrity: sha512-7NXolsK4CAS5+xvdj5OMMbI962hU/wvwoxk+LWR9Ek9bVtyuuYScDN6eS0rUm6TxApFpw7CX1o4uJzcd4AyD3Q==}
     dev: false
 
-  /intellinode@1.3.9:
-    resolution: {integrity: sha512-O3MvPJzO6wNPvQhJiJ/4TJvhCGVbLZRnS39UAgDjg15rkOYy8Cp+kjJ3nO/2M/ccgAl5kvkEyxcSMC+SuxgFYg==}
+  /intellinode@1.4.0:
+    resolution: {integrity: sha512-/FSkV8+55wm6BYLJ88/fm03eK88gm506K17Iq2kCHPt1PdK1QM10a3shJXdzpsx3hujQaDEgWP6QQFyAOgGekw==}
     dependencies:
       axios: 1.5.0
       dotenv: 16.3.1
