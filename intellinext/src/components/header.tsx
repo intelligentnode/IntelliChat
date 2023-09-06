@@ -7,7 +7,7 @@ type Props = {};
 
 export default function Header({}: Props) {
   return (
-    <header className='bg-background py-8'>
+    <header className='sticky top-0 z-50 bg-background py-8'>
       <Container className='flex items-center justify-between'>
         <div>
           <Logo />
