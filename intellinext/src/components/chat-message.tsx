@@ -18,7 +18,9 @@ export const ChatMessage = ({ role, content }: Props) => {
         {isUser ? (
           <>{content}</>
         ) : (
-          <ReactMarkdown className='prose'>{content}</ReactMarkdown>
+          <ReactMarkdown className='prose prose-invert'>
+            {content}
+          </ReactMarkdown>
         )}
       </div>
     </div>
