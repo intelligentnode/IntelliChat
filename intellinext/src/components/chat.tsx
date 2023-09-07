@@ -4,9 +4,10 @@ import React from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
-import Container from './container';
+import Container from '@/components/shared/container';
 import { useMutation } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
+import { Message } from '@/lib/types';
 
 type Props = {};
 

@@ -2,12 +2,13 @@ import React from 'react';
 import Logo from './logo';
 import Container from './container';
 import Link from 'next/link';
+import SideBar from './sidebar';
 
 type Props = {};
 
 export default function Header({}: Props) {
   return (
-    <header className='sticky top-0 z-50 bg-background py-8'>
+    <header className='sticky top-0 z-[60] bg-background py-8'>
       <Container className='flex items-center justify-between'>
         <div>
           <Logo />
@@ -15,6 +16,7 @@ export default function Header({}: Props) {
         <nav className='flex items-center gap-10'>
           <Link href='/'>Chatbot</Link>
           <Link href='#'>Login</Link>
+          <SideBar />
         </nav>
       </Container>
     </header>

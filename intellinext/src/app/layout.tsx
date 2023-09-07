@@ -1,8 +1,10 @@
-import Header from '@/components/header';
 import './globals.css';
-import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { RQProvider } from '@/components/providers';
+
+import Header from '@/components/shared/header';
+import { RQProvider } from '@/components/shared/providers';
+
+import type { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
