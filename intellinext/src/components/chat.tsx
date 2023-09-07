@@ -8,9 +8,13 @@ import Container from '@/components/shared/container';
 import { useMutation } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
+import { useChatSettings } from '@/store/chat-settings';
 
 export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
+  const provider = useChatSettings((s) => s.provider);
+  const systemMessage = useChatSettings((s) => s.systemMessage);
+
   const input = React.useRef<HTMLTextAreaElement>(null);
 
   function appendMessage(message: Message) {
@@ -21,7 +25,7 @@ export default function Chat() {
     mutationFn: async (message: PostMessagePayload) => {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        body: JSON.stringify({ ...message }),
+        body: JSON.stringify({ ...message, provider, systemMessage }),
       });
       const json: { response: string } = await res.json();
       return json;

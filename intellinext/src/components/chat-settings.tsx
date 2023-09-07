@@ -18,6 +18,7 @@ type Props = {};
 
 export default function ChatSettings({}: Props) {
   const systemMessage = useChatSettings((s) => s.systemMessage);
+  const provider = useChatSettings((s) => s.provider);
   const updateSystemMessage = useChatSettings((s) => s.setSystemMessage);
   const updateProvider = useChatSettings((s) => s.setProvider);
 
@@ -36,6 +37,7 @@ export default function ChatSettings({}: Props) {
       <div>
         <Label>Provider</Label>
         <Select
+          value={provider}
           defaultValue='openai'
           onValueChange={(e: string) => {
             updateProvider(e as ChatProvider);

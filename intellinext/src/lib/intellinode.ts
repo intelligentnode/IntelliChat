@@ -1,4 +1,5 @@
-import { Chatbot, ChatGPTInput, LLamaReplicateInput } from 'intellinode';
+import { ChatGPTInput, LLamaReplicateInput } from 'intellinode';
+import { ChatProvider } from './types';
 
 export function getChatInput(provider: string, systemMessage: string) {
   if (provider === 'openai') {
@@ -24,4 +25,14 @@ export function addMessages(
       chatInput.addAssistantMessage(m.content);
     }
   });
+}
+
+export function getChatProviderKey(provider: ChatProvider) {
+  if (provider === 'openai') {
+    return process.env.OPENAI_API_KEY;
+  } else if (provider === 'replicate') {
+    return process.env.REPLICATE_API_KEY;
+  } else {
+    throw new Error('provider is not supported');
+  }
 }
