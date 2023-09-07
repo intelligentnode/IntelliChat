@@ -3,3 +3,5 @@ export type Message = {
   content: string;
   role: 'user' | 'assistant';
 };
+
+export type ChatProvider = 'openai' | 'replicate';

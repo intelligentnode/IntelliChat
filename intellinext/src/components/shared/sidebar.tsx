@@ -1,6 +1,7 @@
 'use client';
 
 import React, { PropsWithChildren } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   Sheet,
   SheetContent,
@@ -10,14 +11,11 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
+import ChatSettings from '../chat-settings';
 
-export default function SideBar({
-  children,
-  title,
-}: PropsWithChildren<{
-  title?: string;
-}>) {
+export default function SideBar({ title }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const pathname = usePathname();
 
   return (
     <Sheet
@@ -29,19 +27,21 @@ export default function SideBar({
       <SheetTrigger asChild>
         <Button variant='ghost' className='p-0 px-2'>
           <Settings className='h-6 w-6' />
-          <span className='sr-only'>Toggle Sidebar</span>
+          <span className='sr-only'>Toggle Settings</span>
         </Button>
       </SheetTrigger>
       <SheetContent
-        className='pt-20'
+        className='border-none pt-[calc(var(--header-height)+1rem)]'
         side='right'
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownCapture={(e) => e.preventDefault()}
       >
-        <SheetHeader className='mb-4'>
-          <SheetTitle>{title}</SheetTitle>
-        </SheetHeader>
-        {children}
+        {pathname === '/' && (
+          <>
+            <SheetHeader className='mb-4'>
+              <SheetTitle>{title}</SheetTitle>
+            </SheetHeader>
+            <ChatSettings />
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

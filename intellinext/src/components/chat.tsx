@@ -9,8 +9,6 @@ import { useMutation } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
 
-type Props = {};
-
 export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const input = React.useRef<HTMLTextAreaElement>(null);
