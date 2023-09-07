@@ -4,41 +4,45 @@ import React from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
-import Container from './container';
-
-type Props = {};
-
-function fakePostMessage(message: Message): Promise<Message> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: nanoid(),
-        content: 'This is a dummy response',
-        role: 'assistant',
-      });
-    }, 1000);
-  });
-}
+import Container from '@/components/shared/container';
+import { useMutation } from '@tanstack/react-query';
+import type { PostMessagePayload } from '@/lib/validators';
+import { Message } from '@/lib/types';
+import { useChatSettings } from '@/store/chat-settings';
 
 export default function Chat() {
-  const [messages, setMessages] = React.useState<Message[]>([
-    {
-      id: '1',
-      content: 'Hello',
-      role: 'user',
-    },
-    {
-      id: '2',
-      content: 'Hello, how can I help you?',
-      role: 'assistant',
-    },
-  ]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const provider = useChatSettings((s) => s.provider);
+  const systemMessage = useChatSettings((s) => s.systemMessage);
+
   const input = React.useRef<HTMLTextAreaElement>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
 
   function appendMessage(message: Message) {
     setMessages((messages) => [...messages, message]);
   }
+
+  const { mutate, isLoading } = useMutation({
+    mutationFn: async (message: PostMessagePayload) => {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ ...message, provider, systemMessage }),
+      });
+      const json: { response: string } = await res.json();
+      return json;
+    },
+    onSuccess: (data) => {
+      const { response } = data;
+      if (!response) return;
+      setMessages((messages) => [
+        ...messages,
+        {
+          id: nanoid(),
+          content: response,
+          role: 'assistant',
+        },
+      ]);
+    },
+  });
 
   const onSubmit = async () => {
     const inputText = input.current?.value;
@@ -50,13 +54,9 @@ export default function Chat() {
       role: 'user',
     } as Message;
 
-    input.current!.value = '';
     appendMessage(prompt);
-    setIsLoading(true);
-
-    const response = await fakePostMessage(prompt);
-    appendMessage(response);
-    setIsLoading(false);
+    mutate({ messages: messages ? [...messages, prompt] : [prompt] });
+    input.current!.value = '';
   };
 
   return (

@@ -1,5 +1,7 @@
-type Message = {
+export type Message = {
   id: string;
   content: string;
-  role: 'system' | 'user' | 'assistant';
+  role: 'user' | 'assistant';
 };
+
+export type ChatProvider = 'openai' | 'replicate';

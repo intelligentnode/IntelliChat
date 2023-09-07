@@ -1,6 +1,5 @@
 declare module 'intellinode' {
-  let ChatModels = ['openai', 'replicate', 'sagemaker'] as const;
-  type SupportedChatModels = (typeof ChatModels)[number];
+  type SupportedChatModels = 'openai' | 'replicate' | 'sagemaker';
 
   class Chatbot {
     constructor(keyValue?: string, provider?: string);
@@ -19,6 +18,7 @@ declare module 'intellinode' {
 
     addMessage(message: ChatGPTMessage);
     addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
   }
   class ChatGPTMessage {
     constructor(message: string, role: string);

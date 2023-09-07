@@ -1,7 +1,10 @@
-import Header from '@/components/header';
 import './globals.css';
-import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+
+import Header from '@/components/shared/header';
+import { RQProvider } from '@/components/shared/providers';
+
+import type { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,10 +23,12 @@ export default function RootLayout({
       <body
         className={`bg-gradient-to-br from-[hsl(202_2%_27%)] from-0% to-[hsl(202_2%_0%)] to-100% ${inter.className}`}
       >
-        <div className='min-height-screen'>
-          <Header />
-          <main>{children}</main>
-        </div>
+        <RQProvider>
+          <div className='min-height-screen'>
+            <Header />
+            <main>{children}</main>
+          </div>
+        </RQProvider>
       </body>
     </html>
   );
