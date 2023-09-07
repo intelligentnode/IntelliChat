@@ -1,4 +1,4 @@
-# IntelliNext
+# IntelliChat
 
 Showcase App built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and [Next.js](https://nextjs.org/).
 
