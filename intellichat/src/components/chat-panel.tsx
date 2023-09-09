@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChatMessage } from './chat-message';
+import { Message } from '@/lib/types';
 
 export const ChatPanel = ({
   chat,

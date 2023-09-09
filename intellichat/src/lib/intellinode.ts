@@ -1,11 +1,19 @@
 import { ChatGPTInput, LLamaReplicateInput } from 'intellinode';
 import { ChatProvider } from './types';
 
-export function getChatInput(provider: string, systemMessage: string) {
+export function getChatInput(
+  provider: string,
+  model: string,
+  systemMessage: string
+) {
   if (provider === 'openai') {
-    return new ChatGPTInput(systemMessage);
+    return new ChatGPTInput(systemMessage, {
+      model: model,
+    });
   } else if (provider === 'replicate') {
-    return new LLamaReplicateInput(systemMessage);
+    return new LLamaReplicateInput(systemMessage, {
+      model: model,
+    });
   } else {
     throw new Error('provider is not supported');
   }

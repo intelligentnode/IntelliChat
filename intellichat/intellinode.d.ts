@@ -24,7 +24,7 @@ declare module 'intellinode' {
     constructor(message: string, role: string);
   }
   class LLamaReplicateInput {
-    constructor(message: string);
+    constructor(message: string, options?: { model?: string });
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
