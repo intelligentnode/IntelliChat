@@ -9,7 +9,10 @@ import {
 
 const defaultSystemMessage =
   'You are a helpful assistant. Format response in Markdown where needed.';
-const defaultProvider = 'openai';
+const defaultProvider = {
+  name: 'openai' as const,
+  model: 'gpt-3.5-turbo' as const,
+};
 
 export async function POST(req: Request) {
   const json = await req.json();
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
     systemMessage = defaultSystemMessage,
   } = parsedJson.data;
 
-  const key = apiKey || getChatProviderKey(provider);
+  const key = apiKey || getChatProviderKey(provider.name);
 
   if (!key) {
     return NextResponse.json(
@@ -42,15 +45,19 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log(key);
-
   const chatSystemMessage =
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
-  const chatProvider = provider.trim() !== '' ? provider : defaultProvider;
+  const chatProvider = provider || defaultProvider;
 
   try {
-    const chatbot = new Chatbot(key, chatProvider);
-    const input = getChatInput(chatProvider, chatSystemMessage);
+    const chatbot = new Chatbot(key, chatProvider.name);
+    const input = getChatInput(
+      chatProvider.name,
+      chatProvider.model,
+      chatSystemMessage
+    );
+    console.log(chatProvider);
+    console.log(input);
     addMessages(input, messages);
     const response = await chatbot.chat(input);
 
