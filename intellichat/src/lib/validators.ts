@@ -23,7 +23,10 @@ export const chatbotValidator = z.object({
       role: z.enum(['user', 'assistant']),
     })
   ),
-  apiKey: z.string().optional(),
+  apiKeys: z.object({
+    openai: z.string().optional(),
+    replicate: z.string().optional(),
+  }),
   provider: z.union([openAI, replicate]).optional(),
   systemMessage: z.string().optional(),
 });

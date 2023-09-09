@@ -14,6 +14,7 @@ export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const provider = useChatSettings((s) => s.provider);
   const systemMessage = useChatSettings((s) => s.systemMessage);
+  const apiKeys = useChatSettings((s) => s.apiKeys);
 
   const input = React.useRef<HTMLTextAreaElement>(null);
 
@@ -25,7 +26,7 @@ export default function Chat() {
     mutationFn: async (message: PostMessagePayload) => {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        body: JSON.stringify({ ...message, provider, systemMessage }),
+        body: JSON.stringify({ ...message, provider, systemMessage, apiKeys }),
       });
       const json: { response: string } = await res.json();
       return json;

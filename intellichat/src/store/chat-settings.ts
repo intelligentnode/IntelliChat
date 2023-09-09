@@ -21,9 +21,14 @@ type ChatSettingsState = {
   isSidebarOpen: boolean;
   systemMessage: string;
   provider: OpenAI | Replicate;
+  apiKeys: {
+    openai: string;
+    replicate: string;
+  };
   setSystemMessage: (message: string) => void;
   setProvider: (provider: 'openai' | 'replicate') => void;
   setModel: (model: OpenAI['model'] | Replicate['model']) => void;
+  setKey: (provider: 'openai' | 'replicate', key: string) => void;
   toggleSidebar: () => void;
 };
 
@@ -31,8 +36,20 @@ export const useChatSettings = create<ChatSettingsState>((set, get) => ({
   systemMessage: defaultSystemMessage,
   provider: defaultProvider,
   isSidebarOpen: false,
+  apiKeys: {
+    openai: '',
+    replicate: '',
+  },
   setSystemMessage: (message: string) => {
     set({ systemMessage: message });
+  },
+  setKey: (provider: 'openai' | 'replicate', key: string) => {
+    set((state) => ({
+      apiKeys: {
+        ...state.apiKeys,
+        [provider]: key,
+      },
+    }));
   },
   setProvider: (provider: 'openai' | 'replicate') => {
     set((state) => ({
@@ -46,7 +63,6 @@ export const useChatSettings = create<ChatSettingsState>((set, get) => ({
   setModel: (model: OpenAI['model'] | Replicate['model']) => {
     const currentProvider = get().provider.name;
     if (AIProviders[currentProvider].models.includes(model)) {
-      console.log('update');
       set((state) => ({
         provider: {
           ...state.provider,
@@ -55,6 +71,7 @@ export const useChatSettings = create<ChatSettingsState>((set, get) => ({
       }));
     }
   },
+
   toggleSidebar: () => {
     set((state) => ({
       isSidebarOpen: !state.isSidebarOpen,

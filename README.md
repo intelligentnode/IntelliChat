@@ -1,17 +1,19 @@
 # IntelliChat
 
-Showcase App built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and [Next.js](https://nextjs.org/).
+An open-source AI chatboot app built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and [Next.js](https://nextjs.org/).
 
 ## Features
 
-- **Chatbot:** Supports **OpenAI** (default) or **Replicate**.
-- **AI Blog Assistant:** Generate a summary, an image, and SEO-optimized meta tags for a blog post. Supports **OpenAI** or **Cohere** for text generation and **Stability** or **OpenAI** for image generation.
+- Select your preferred AI Provider and model from the UI.
+  - **OpenAI** (default): gpt-4, gpt-3.5-turbo
+  - **Replicate**: 70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct.
+- Override API keys from the UI.
 
 ## Installing and Running the App
 
 1. Clone the repository
-2. Install the dependencies `pnpm install`
-3. Start the Next.js server `pnpm dev`
+2. Install the dependencies: `pnpm install` or `npm install` or `yarn install`
+3. Start the Next.js server `pnpm dev` or `npm run dev` or `yarn dev`
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
