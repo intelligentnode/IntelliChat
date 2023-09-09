@@ -28,12 +28,12 @@ export async function POST(req: Request) {
 
   const {
     messages,
-    apiKey,
+    apiKeys,
     provider = defaultProvider,
     systemMessage = defaultSystemMessage,
   } = parsedJson.data;
 
-  const key = apiKey || getChatProviderKey(provider.name);
+  const key = apiKeys[provider.name] || getChatProviderKey(provider.name);
 
   if (!key) {
     return NextResponse.json(
@@ -56,8 +56,6 @@ export async function POST(req: Request) {
       chatProvider.model,
       chatSystemMessage
     );
-    console.log(chatProvider);
-    console.log(input);
     addMessages(input, messages);
     const response = await chatbot.chat(input);
 
