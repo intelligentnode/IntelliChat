@@ -1,7 +1,6 @@
 import React from 'react';
 import Logo from './logo';
 import Container from './container';
-import Link from 'next/link';
 import SideBar from './sidebar';
 
 type Props = {};
@@ -14,8 +13,6 @@ export default function Header({}: Props) {
           <Logo />
         </div>
         <nav className='flex items-center gap-10'>
-          <Link href='/'>Chatbot</Link>
-          <Link href='#'>Login</Link>
           <SideBar />
         </nav>
       </Container>
