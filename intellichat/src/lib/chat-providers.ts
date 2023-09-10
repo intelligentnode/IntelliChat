@@ -1,5 +1,5 @@
-const openAIModels = ['gpt-3.5-turbo', 'gpt-4'] as const;
-const replicateModels = [
+export const openAIModels = ['gpt-3.5-turbo', 'gpt-4'] as const;
+export const replicateModels = [
   '70b-chat',
   '13b-chat',
   '34b-code',

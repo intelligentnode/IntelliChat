@@ -9,6 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
 import { useChatSettings } from '@/store/chat-settings';
+import { useToast } from './ui/use-toast';
 
 export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
@@ -16,6 +17,7 @@ export default function Chat() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const apiKeys = useChatSettings((s) => s.apiKeys);
+  const { toast } = useToast();
 
   const input = React.useRef<HTMLTextAreaElement>(null);
 
@@ -34,13 +36,16 @@ export default function Chat() {
         systemMessage,
         apiKeys,
       };
-
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      const json: { response: string } = await res.json();
-      return json;
+      if (res.ok) {
+        const json: { response: string } = await res.json();
+        return json;
+      }
+      const { error } = await res.json();
+      throw new Error(`${error}`);
     },
     onSuccess: (data) => {
       const { response } = data;
@@ -53,6 +58,14 @@ export default function Chat() {
           role: 'assistant',
         },
       ]);
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Error',
+        variant: 'destructive',
+        description: err.message,
+        duration: 5000,
+      });
     },
   });
 

@@ -21,14 +21,7 @@ export async function POST(req: Request) {
 
   if (!parsedJson.success) {
     const { error } = parsedJson;
-    return NextResponse.json(
-      {
-        error: { message: 'Invalid', error },
-      },
-      {
-        status: 400,
-      }
-    );
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
   const {
@@ -45,7 +38,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          'no api key provided, either add it to your .env file or in the app settings',
+          'no api key provided, either add it to your .env file or in the chat settings',
       },
       { status: 400 }
     );
@@ -64,9 +57,8 @@ export async function POST(req: Request) {
     );
     addMessages(input, messages);
     const response = await chatbot.chat(input);
-
     return NextResponse.json({ response: response[0] });
-  } catch (e) {
+  } catch (e: any) {
     return NextResponse.json(
       {
         error: 'invalid api key or provider',

@@ -5,6 +5,7 @@ import Header from '@/components/shared/header';
 import { RQProvider } from '@/components/shared/providers';
 
 import type { Metadata } from 'next';
+import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             <main>{children}</main>
           </div>
         </RQProvider>
+        <Toaster />
       </body>
     </html>
   );
