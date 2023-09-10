@@ -27,14 +27,12 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
-      // limit the number of messages sent to the API to the last N messages
-      const lastNMessages = messages.slice(-numberOfMessages);
-
       const payload: PostMessagePayload = {
-        messages: lastNMessages,
+        messages,
         provider,
         systemMessage,
         apiKeys,
+        n: numberOfMessages,
       };
       const res = await fetch('/api/chat', {
         method: 'POST',

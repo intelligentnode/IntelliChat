@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Chatbot } from 'intellinode';
+import { ChatContext, Chatbot } from 'intellinode';
 import { chatbotValidator } from '@/lib/validators';
 import {
   addMessages,
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     apiKeys,
     provider = defaultProvider,
     systemMessage = defaultSystemMessage,
+    n = 2,
   } = parsedJson.data;
 
   const key =
@@ -50,13 +51,26 @@ export async function POST(req: Request) {
 
   try {
     const chatbot = new Chatbot(key, chatProvider.name);
+    // get the input for the chatbot
     const input = getChatInput(
       chatProvider.name,
       chatProvider.model,
       chatSystemMessage
     );
-    addMessages(input, messages);
+    const context = new ChatContext(key, chatProvider.name);
+    // extract the last message from the array; this is the user's message
+    const userMessage = messages[messages.length - 1].content;
+    // get the closest context to the user's message
+    const contextResponse = await context.getRoleContext(
+      userMessage,
+      messages,
+      n
+    );
+
+    // append the context messages to the chat input
+    addMessages(input, contextResponse);
     const response = await chatbot.chat(input);
+
     return NextResponse.json({ response: response[0] });
   } catch (e: any) {
     return NextResponse.json(

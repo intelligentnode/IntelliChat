@@ -112,7 +112,6 @@ export default function ChatSettings() {
           max={8}
           value={numberOfMessages}
           onChange={(e) => {
-            console.log(e.target.value);
             setNumberOfMessages(parseInt(e.target.value));
           }}
         />
