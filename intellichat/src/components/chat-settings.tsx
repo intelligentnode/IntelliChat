@@ -23,19 +23,23 @@ import { ChevronsUpDown } from 'lucide-react';
 import { Button } from './ui/button';
 
 export default function ChatSettings() {
+  const [areKeysVisible, setKeysVisibility] = React.useState(true);
+
   const systemMessage = useChatSettings((s) => s.systemMessage);
+  const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
   const openaikey = useChatSettings((s) => s.apiKeys.openai);
   const replicatekey = useChatSettings((s) => s.apiKeys.replicate);
-  const setKey = useChatSettings((s) => s.setKey);
+
   const updateSystemMessage = useChatSettings((s) => s.setSystemMessage);
+  const setNumberOfMessages = useChatSettings((s) => s.setNumberOfMessages);
+  const setKey = useChatSettings((s) => s.setKey);
   const updateProvider = useChatSettings((s) => s.setProvider);
   const updateModel = useChatSettings((s) => s.setModel);
-  const [areKeysVisible, setKeysVisibility] = React.useState(false);
 
   return (
     <div className='space-y-8'>
-      <div>
+      <div className='space-y-1'>
         <Label htmlFor='systemMsg'>System Message</Label>
         <Input
           id='systemMsg'
@@ -45,7 +49,7 @@ export default function ChatSettings() {
           }}
         />
       </div>
-      <div>
+      <div className='space-y-1'>
         <Label>Provider</Label>
         <Select
           value={provider.name}
@@ -68,7 +72,7 @@ export default function ChatSettings() {
           </SelectContent>
         </Select>
       </div>
-      <div>
+      <div className='space-y-1'>
         <Label>Models</Label>
         <Select
           value={provider.model}
@@ -90,6 +94,23 @@ export default function ChatSettings() {
             </SelectGroup>
           </SelectContent>
         </Select>
+      </div>
+      <div className='space-y-0'>
+        <Label htmlFor='systemMsg'>Number of Messages</Label>
+        <Input
+          id='systemMsg'
+          type='number'
+          min={4}
+          max={8}
+          value={numberOfMessages}
+          onChange={(e) => {
+            console.log(e.target.value);
+            setNumberOfMessages(parseInt(e.target.value));
+          }}
+        />
+        <p className='text-xs  text-zinc-300'>
+          number of messages to include in a request
+        </p>
       </div>
       <Separator orientation='horizontal' />
       <Collapsible

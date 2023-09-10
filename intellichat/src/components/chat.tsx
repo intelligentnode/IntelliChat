@@ -14,6 +14,7 @@ export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const provider = useChatSettings((s) => s.provider);
   const systemMessage = useChatSettings((s) => s.systemMessage);
+  const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const apiKeys = useChatSettings((s) => s.apiKeys);
 
   const input = React.useRef<HTMLTextAreaElement>(null);
@@ -23,10 +24,20 @@ export default function Chat() {
   }
 
   const { mutate, isLoading } = useMutation({
-    mutationFn: async (message: PostMessagePayload) => {
+    mutationFn: async (messages: Message[]) => {
+      // limit the number of messages sent to the API to the last N messages
+      const lastNMessages = messages.slice(-numberOfMessages);
+
+      const payload: PostMessagePayload = {
+        messages: lastNMessages,
+        provider,
+        systemMessage,
+        apiKeys,
+      };
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        body: JSON.stringify({ ...message, provider, systemMessage, apiKeys }),
+        body: JSON.stringify(payload),
       });
       const json: { response: string } = await res.json();
       return json;
@@ -56,7 +67,7 @@ export default function Chat() {
     } as Message;
 
     appendMessage(prompt);
-    mutate({ messages: messages ? [...messages, prompt] : [prompt] });
+    mutate(messages ? [...messages, prompt] : [prompt]);
     input.current!.value = '';
   };
 

@@ -1,11 +1,11 @@
-const openAIModels = ['gpt-3.5-turbo', 'gpt-4'];
+const openAIModels = ['gpt-3.5-turbo', 'gpt-4'] as const;
 const replicateModels = [
   '70b-chat',
   '13b-chat',
   '34b-code',
   '34b-python',
   '13b-code-instruct',
-];
+] as const;
 
 export const AIProviders: {
   openai: { name: 'openai'; models: typeof openAIModels };
