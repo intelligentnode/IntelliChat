@@ -45,7 +45,7 @@ export default function Chat() {
         return json;
       }
       const { error } = await res.json();
-      throw new Error(`${res.status}: ${error}`);
+      throw new Error(`${error}`);
     },
     onSuccess: (data) => {
       const { response } = data;
