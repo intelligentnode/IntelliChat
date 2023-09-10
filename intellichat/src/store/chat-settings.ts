@@ -21,11 +21,13 @@ type ChatSettingsState = {
   isSidebarOpen: boolean;
   systemMessage: string;
   provider: OpenAI | Replicate;
+  numberOfMessages: number;
   apiKeys: {
     openai: string;
     replicate: string;
   };
   setSystemMessage: (message: string) => void;
+  setNumberOfMessages: (numberOfMessages: number) => void;
   setProvider: (provider: 'openai' | 'replicate') => void;
   setModel: (model: OpenAI['model'] | Replicate['model']) => void;
   setKey: (provider: 'openai' | 'replicate', key: string) => void;
@@ -36,12 +38,17 @@ export const useChatSettings = create<ChatSettingsState>((set, get) => ({
   systemMessage: defaultSystemMessage,
   provider: defaultProvider,
   isSidebarOpen: false,
+  numberOfMessages: 4,
   apiKeys: {
     openai: '',
     replicate: '',
   },
   setSystemMessage: (message: string) => {
     set({ systemMessage: message });
+  },
+  setNumberOfMessages: (numberOfMessages: number) => {
+    if (numberOfMessages < 4 || numberOfMessages > 8) return;
+    set({ numberOfMessages });
   },
   setKey: (provider: 'openai' | 'replicate', key: string) => {
     set((state) => ({

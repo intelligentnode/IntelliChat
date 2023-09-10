@@ -21,9 +21,14 @@ export async function POST(req: Request) {
 
   if (!parsedJson.success) {
     const { error } = parsedJson;
-    return NextResponse.json({
-      error: { message: 'Invalid', error },
-    });
+    return NextResponse.json(
+      {
+        error: { message: 'Invalid', error },
+      },
+      {
+        status: 400,
+      }
+    );
   }
 
   const {
@@ -33,7 +38,8 @@ export async function POST(req: Request) {
     systemMessage = defaultSystemMessage,
   } = parsedJson.data;
 
-  const key = apiKeys[provider.name] || getChatProviderKey(provider.name);
+  const key =
+    (apiKeys && apiKeys[provider.name]) || getChatProviderKey(provider.name);
 
   if (!key) {
     return NextResponse.json(

@@ -8,7 +8,7 @@ type Props = {};
 export default function Header({}: Props) {
   return (
     <header className='sticky top-0 z-[60] bg-background py-8 shadow-sm'>
-      <Container className='flex items-center justify-between'>
+      <Container className='flex max-w-full items-center justify-between'>
         <div>
           <Logo />
         </div>
