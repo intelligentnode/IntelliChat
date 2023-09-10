@@ -12,7 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { AIProviders } from '@/lib/chat-providers';
+import {
+  AIProviders,
+  openAIModels,
+  replicateModels,
+} from '@/lib/chat-providers';
 import { Separator } from './ui/separator';
 import {
   Collapsible,
@@ -78,7 +82,11 @@ export default function ChatSettings() {
           value={provider.model}
           defaultValue='davinci'
           onValueChange={(e: string) => {
-            updateModel(e);
+            updateModel(
+              e as
+                | (typeof openAIModels)[number]
+                | (typeof replicateModels)[number]
+            );
           }}
         >
           <SelectTrigger className='w-[180px]'>

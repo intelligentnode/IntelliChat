@@ -59,21 +59,36 @@ export const useChatSettings = create<ChatSettingsState>((set, get) => ({
     }));
   },
   setProvider: (provider: 'openai' | 'replicate') => {
-    set((state) => ({
-      provider: {
-        ...state.provider,
-        name: provider,
-        model: AIProviders[provider].models[0],
-      },
-    }));
+    let newProvider: OpenAI | Replicate;
+    if (provider === 'openai') {
+      const model = AIProviders.openai.models[0];
+      newProvider = {
+        name: 'openai',
+        model,
+      };
+    } else {
+      const model = AIProviders.replicate.models[0];
+      newProvider = {
+        name: 'replicate',
+        model,
+      };
+    }
+    set(() => ({ provider: newProvider }));
   },
   setModel: (model: OpenAI['model'] | Replicate['model']) => {
     const currentProvider = get().provider.name;
-    if (AIProviders[currentProvider].models.includes(model)) {
+    if (currentProvider === 'openai') {
       set((state) => ({
         provider: {
-          ...state.provider,
-          model: model,
+          ...(state.provider as OpenAI),
+          model: model as OpenAI['model'],
+        },
+      }));
+    } else {
+      set((state) => ({
+        provider: {
+          ...(state.provider as Replicate),
+          model: model as Replicate['model'],
         },
       }));
     }
