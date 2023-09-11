@@ -18,10 +18,10 @@ import {
   replicateModels,
 } from '@/lib/chat-providers';
 import { Switch } from './ui/switch';
-import { InfoIcon } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
+import FieldTooltip from './field-tooltip';
+import FieldGroup from './field-group';
+import ApiKeyInput from './apikey-input';
 
 export default function ChatSettings() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
@@ -155,80 +155,5 @@ export default function ChatSettings() {
         />
       </div>
     </ScrollArea>
-  );
-}
-
-function ApiKeyInput({
-  name,
-  label,
-  value,
-  onChange,
-}: {
-  name: 'openai' | 'replicate';
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
-  const envKeyExist = useChatSettings((s) => s.envKeyExist);
-  const provider = useChatSettings((s) => s.provider);
-  const withContext = useChatSettings((s) => s.withContext);
-  const isVisible =
-    provider.name === name || (withContext && name === 'openai');
-
-  const isRequired = envKeyExist[name];
-
-  if (!isVisible) return null;
-
-  return (
-    <FieldGroup>
-      <Label htmlFor='openaiKey'>{label}</Label>
-      <Input
-        id='openaiKey'
-        value={value}
-        onChange={onChange}
-        required={isRequired}
-      />
-      {envKeyExist[name] && (
-        <p className='text-xs text-zinc-300'>
-          API Key is set as an environment variable, but you can override it
-          here.
-        </p>
-      )}
-    </FieldGroup>
-  );
-}
-
-function FieldGroup({
-  children,
-  withToolTip,
-  className,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  withToolTip?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        'mb-4 space-y-2',
-        withToolTip && 'flex items-center space-x-2 space-y-0',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function FieldTooltip({ children }: { children?: React.ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger>
-        <InfoIcon width={20} />
-        <TooltipContent className='max-w-xs text-left'>
-          {children}
-        </TooltipContent>
-      </TooltipTrigger>
-    </Tooltip>
   );
 }

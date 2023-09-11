@@ -31,7 +31,7 @@ export default function Chat() {
         provider,
         systemMessage,
         apiKeys,
-        withContext: false,
+        withContext,
         n: numberOfMessages,
       };
       const res = await fetch('/api/chat', {
