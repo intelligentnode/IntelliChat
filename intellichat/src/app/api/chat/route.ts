@@ -34,6 +34,7 @@ export async function POST(req: Request) {
 
   const key =
     (apiKeys && apiKeys[provider.name]) || getChatProviderKey(provider.name);
+  const contextKey = apiKeys?.openai || getChatProviderKey('openai');
 
   if (!key) {
     return NextResponse.json(
@@ -45,9 +46,20 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!contextKey) {
+    return NextResponse.json(
+      {
+        error:
+          'OpenAi key was not provided, either add it to your .env file or in the chat settings',
+      },
+      { status: 400 }
+    );
+  }
+
   const chatSystemMessage =
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
   const chatProvider = provider || defaultProvider;
+  const contextProvider = defaultProvider;
 
   try {
     const chatbot = new Chatbot(key, chatProvider.name);
@@ -57,7 +69,7 @@ export async function POST(req: Request) {
       chatProvider.model,
       chatSystemMessage
     );
-    const context = new ChatContext(key, chatProvider.name);
+    const context = new ChatContext(contextKey, contextProvider.name);
     // extract the last message from the array; this is the user's message
     const userMessage = messages[messages.length - 1].content;
     // get the closest context to the user's message
