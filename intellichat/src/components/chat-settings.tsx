@@ -18,6 +18,8 @@ import {
   replicateModels,
 } from '@/lib/chat-providers';
 import { Switch } from './ui/switch';
+import { InfoIcon } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 export default function ChatSettings() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
@@ -95,8 +97,18 @@ export default function ChatSettings() {
           </SelectContent>
         </Select>
       </div>
-      <div className='space-y-0'>
-        <Label htmlFor='systemMsg'>Number of Messages</Label>
+      <div className='space-y-1'>
+        <div className='flex items-center gap-2'>
+          <Label htmlFor='systemMsg'>Number of Messages</Label>
+          <FieldTooltip>
+            <p className='text-sm'>
+              The number of messages to include in a request. The higher the
+              number, the more context the AI will have to work with. This will
+              determine the number of messages used to generate the context when
+              the "Use Chat Context" option is enabled.
+            </p>
+          </FieldTooltip>
+        </div>
         <Input
           id='systemMsg'
           type='number'
@@ -107,17 +119,22 @@ export default function ChatSettings() {
             setNumberOfMessages(parseInt(e.target.value));
           }}
         />
-        <p className='text-xs  text-zinc-300'>
-          number of messages to include in a request
-        </p>
       </div>
-      <div className='flex items-center space-x-2'>
+      <div className='relative flex items-center space-x-2'>
         <Switch
           checked={useContext}
           onCheckedChange={setUseContext}
           id='use-chatcontext'
         />
         <Label htmlFor='use-chatcontext'>Use Chat Context</Label>
+        <FieldTooltip>
+          <p className='text-sm'>
+            When enabled, the chatbot wil dynamically select previous parts of
+            the conversation that are most relevant to the current query, using
+            embeddings. The number of parts will be equal to the number of
+            messages set above.
+          </p>
+        </FieldTooltip>
       </div>
       <div className='space-y-2'>
         <ApiKeyInput
@@ -167,5 +184,18 @@ function ApiKeyInput({
         required={isRequired}
       />
     </div>
+  );
+}
+
+function FieldTooltip({ children }: { children?: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <InfoIcon width={20} />
+        <TooltipContent className='max-w-xs text-left'>
+          {children}
+        </TooltipContent>
+      </TooltipTrigger>
+    </Tooltip>
   );
 }

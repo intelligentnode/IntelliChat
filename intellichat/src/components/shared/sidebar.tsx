@@ -11,8 +11,9 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import ChatSettings from '../chat-settings';
+import ChatSettings from '@/components/chat-settings';
 import { useChatSettings } from '@/store/chat-settings';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 export default function SideBar({ title }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -45,7 +46,9 @@ export default function SideBar({ title }: { title?: string }) {
             <SheetHeader className='mb-4'>
               <SheetTitle>{title}</SheetTitle>
             </SheetHeader>
-            <ChatSettings />
+            <TooltipProvider>
+              <ChatSettings />
+            </TooltipProvider>
           </>
         )}
       </SheetContent>
