@@ -20,6 +20,9 @@ import {
 import { Switch } from './ui/switch';
 import { InfoIcon } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from './ui/scroll-area';
+
 export default function ChatSettings() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
@@ -36,8 +39,8 @@ export default function ChatSettings() {
   const setWithContext = useChatSettings((s) => s.setWithContext);
 
   return (
-    <div className='space-y-8'>
-      <div className='space-y-1'>
+    <ScrollArea className='h-full'>
+      <FieldGroup>
         <Label htmlFor='systemMsg'>System Message</Label>
         <Input
           id='systemMsg'
@@ -46,8 +49,8 @@ export default function ChatSettings() {
             updateSystemMessage(e.target.value);
           }}
         />
-      </div>
-      <div className='space-y-1'>
+      </FieldGroup>
+      <FieldGroup>
         <Label>Provider</Label>
         <Select
           value={provider.name}
@@ -69,8 +72,8 @@ export default function ChatSettings() {
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
-      <div className='space-y-1'>
+      </FieldGroup>
+      <FieldGroup>
         <Label>Models</Label>
         <Select
           value={provider.model}
@@ -96,8 +99,8 @@ export default function ChatSettings() {
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
-      <div className='space-y-1'>
+      </FieldGroup>
+      <FieldGroup>
         <div className='flex items-center gap-2'>
           <Label htmlFor='systemMsg'>Number of Messages</Label>
           <FieldTooltip>
@@ -119,9 +122,10 @@ export default function ChatSettings() {
             setNumberOfMessages(parseInt(e.target.value));
           }}
         />
-      </div>
-      <div className='relative flex items-center space-x-2'>
+      </FieldGroup>
+      <FieldGroup withToolTip>
         <Switch
+          disabled={provider.name === 'openai'}
           checked={withContext}
           onCheckedChange={setWithContext}
           id='use-chatcontext'
@@ -135,7 +139,7 @@ export default function ChatSettings() {
             messages set above.
           </p>
         </FieldTooltip>
-      </div>
+      </FieldGroup>
       <div className='space-y-2'>
         <ApiKeyInput
           name='replicate'
@@ -150,7 +154,7 @@ export default function ChatSettings() {
           onChange={(e) => setKey('openai', e.target.value)}
         />
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 
@@ -176,7 +180,7 @@ function ApiKeyInput({
   if (!isVisible) return null;
 
   return (
-    <div>
+    <FieldGroup>
       <Label htmlFor='openaiKey'>{label}</Label>
       <Input
         id='openaiKey'
@@ -184,6 +188,34 @@ function ApiKeyInput({
         onChange={onChange}
         required={isRequired}
       />
+      {envKeyExist[name] && (
+        <p className='text-xs text-zinc-300'>
+          API Key is set as an environment variable, but you can override it
+          here.
+        </p>
+      )}
+    </FieldGroup>
+  );
+}
+
+function FieldGroup({
+  children,
+  withToolTip,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  withToolTip?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'mb-4 space-y-2',
+        withToolTip && 'flex items-center space-x-2 space-y-0',
+        className
+      )}
+    >
+      {children}
     </div>
   );
 }

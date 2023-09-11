@@ -51,7 +51,7 @@ type ChatSettingsState = {
 export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
-      withContext: false,
+      withContext: true,
       systemMessage: defaultSystemMessage,
       provider: defaultProvider,
       isSidebarOpen: false,
