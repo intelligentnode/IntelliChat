@@ -4,6 +4,7 @@ import {
   defaultProvider,
 } from '@/lib/chat-providers';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 const defaultSystemMessage = 'You are a helpful assistant!';
 
@@ -34,69 +35,75 @@ type ChatSettingsState = {
   toggleSidebar: () => void;
 };
 
-export const useChatSettings = create<ChatSettingsState>((set, get) => ({
-  systemMessage: defaultSystemMessage,
-  provider: defaultProvider,
-  isSidebarOpen: false,
-  numberOfMessages: 4,
-  apiKeys: {
-    openai: '',
-    replicate: '',
-  },
-  setSystemMessage: (message: string) => {
-    set({ systemMessage: message });
-  },
-  setNumberOfMessages: (numberOfMessages: number) => {
-    if (numberOfMessages < 4 || numberOfMessages > 8) return;
-    set({ numberOfMessages });
-  },
-  setKey: (provider: 'openai' | 'replicate', key: string) => {
-    set((state) => ({
+export const useChatSettings = create<ChatSettingsState>()(
+  persist(
+    (set, get) => ({
+      systemMessage: defaultSystemMessage,
+      provider: defaultProvider,
+      isSidebarOpen: false,
+      numberOfMessages: 4,
       apiKeys: {
-        ...state.apiKeys,
-        [provider]: key,
+        openai: '',
+        replicate: '',
       },
-    }));
-  },
-  setProvider: (provider: 'openai' | 'replicate') => {
-    let newProvider: OpenAI | Replicate;
-    if (provider === 'openai') {
-      const model = AIProviders.openai.models[0];
-      newProvider = {
-        name: 'openai',
-        model,
-      };
-    } else {
-      const model = AIProviders.replicate.models[0];
-      newProvider = {
-        name: 'replicate',
-        model,
-      };
+      setSystemMessage: (message: string) => {
+        set({ systemMessage: message });
+      },
+      setNumberOfMessages: (numberOfMessages: number) => {
+        if (numberOfMessages < 4 || numberOfMessages > 8) return;
+        set({ numberOfMessages });
+      },
+      setKey: (provider: 'openai' | 'replicate', key: string) => {
+        set((state) => ({
+          apiKeys: {
+            ...state.apiKeys,
+            [provider]: key,
+          },
+        }));
+      },
+      setProvider: (provider: 'openai' | 'replicate') => {
+        let newProvider: OpenAI | Replicate;
+        if (provider === 'openai') {
+          const model = AIProviders.openai.models[0];
+          newProvider = {
+            name: 'openai',
+            model,
+          };
+        } else {
+          const model = AIProviders.replicate.models[0];
+          newProvider = {
+            name: 'replicate',
+            model,
+          };
+        }
+        set(() => ({ provider: newProvider }));
+      },
+      setModel: (model: OpenAI['model'] | Replicate['model']) => {
+        const currentProvider = get().provider.name;
+        if (currentProvider === 'openai') {
+          set((state) => ({
+            provider: {
+              ...(state.provider as OpenAI),
+              model: model as OpenAI['model'],
+            },
+          }));
+        } else {
+          set((state) => ({
+            provider: {
+              ...(state.provider as Replicate),
+              model: model as Replicate['model'],
+            },
+          }));
+        }
+      },
+      toggleSidebar: () => {
+        set((state) => ({
+          isSidebarOpen: !state.isSidebarOpen,
+        }));
+      },
+    }),
+    {
+      name: 'chat-settings',
     }
-    set(() => ({ provider: newProvider }));
-  },
-  setModel: (model: OpenAI['model'] | Replicate['model']) => {
-    const currentProvider = get().provider.name;
-    if (currentProvider === 'openai') {
-      set((state) => ({
-        provider: {
-          ...(state.provider as OpenAI),
-          model: model as OpenAI['model'],
-        },
-      }));
-    } else {
-      set((state) => ({
-        provider: {
-          ...(state.provider as Replicate),
-          model: model as Replicate['model'],
-        },
-      }));
-    }
-  },
-
-  toggleSidebar: () => {
-    set((state) => ({
-      isSidebarOpen: !state.isSidebarOpen,
-    }));
-  },
-}));
+  )
+);
