@@ -31,8 +31,8 @@ type ChatSettingsState = {
     openai: boolean;
     replicate: boolean;
   };
-  useContext: boolean;
-  setUseContext: (useContext: boolean) => void;
+  withContext: boolean;
+  setWithContext: (withContext: boolean) => void;
   setEnvKeyExist: ({
     openai,
     replicate,
@@ -51,7 +51,7 @@ type ChatSettingsState = {
 export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
-      useContext: false,
+      withContext: false,
       systemMessage: defaultSystemMessage,
       provider: defaultProvider,
       isSidebarOpen: false,
@@ -64,8 +64,8 @@ export const useChatSettings = create<ChatSettingsState>()(
         openai: false,
         replicate: false,
       },
-      setUseContext: (useContext: boolean) => {
-        set({ useContext });
+      setWithContext: (withContext: boolean) => {
+        set({ withContext });
       },
       setEnvKeyExist: ({
         openai,
@@ -103,7 +103,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           const model = AIProviders.openai.models[0];
           const newProvider: OpenAI = { name: 'openai', model };
           // set new provider and context to true
-          set(() => ({ provider: newProvider, useContext: true }));
+          set(() => ({ provider: newProvider, withContext: true }));
         } else {
           // get default replicate model
           const model = AIProviders.replicate.models[0];
@@ -111,7 +111,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           // set context to true if openai key is set
           const ctx = get().envKeyExist.openai || get().apiKeys.openai !== '';
           // set new provider and context
-          set(() => ({ provider: newProvider, useContext: ctx }));
+          set(() => ({ provider: newProvider, withContext: ctx }));
         }
       },
       setModel: (model: OpenAI['model'] | Replicate['model']) => {

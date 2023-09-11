@@ -18,6 +18,7 @@ export default function Chat() {
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const apiKeys = useChatSettings((s) => s.apiKeys);
   const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+  const withContext = useChatSettings((s) => s.withContext);
 
   const { toast } = useToast();
 
@@ -30,6 +31,7 @@ export default function Chat() {
         provider,
         systemMessage,
         apiKeys,
+        withContext: false,
         n: numberOfMessages,
       };
       const res = await fetch('/api/chat', {

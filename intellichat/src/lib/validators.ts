@@ -31,6 +31,7 @@ export const chatbotValidator = z.object({
     .optional(),
   provider: z.union([openAI, replicate]).optional(),
   systemMessage: z.string().optional(),
+  withContext: z.boolean(),
   n: z.number().optional(),
 });
 

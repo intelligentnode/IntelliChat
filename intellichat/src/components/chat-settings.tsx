@@ -26,14 +26,14 @@ export default function ChatSettings() {
   const provider = useChatSettings((s) => s.provider);
   const openaikey = useChatSettings((s) => s.apiKeys.openai);
   const replicatekey = useChatSettings((s) => s.apiKeys.replicate);
-  const useContext = useChatSettings((s) => s.useContext);
+  const withContext = useChatSettings((s) => s.withContext);
 
   const updateSystemMessage = useChatSettings((s) => s.setSystemMessage);
   const setNumberOfMessages = useChatSettings((s) => s.setNumberOfMessages);
   const setKey = useChatSettings((s) => s.setKey);
   const updateProvider = useChatSettings((s) => s.setProvider);
   const updateModel = useChatSettings((s) => s.setModel);
-  const setUseContext = useChatSettings((s) => s.setUseContext);
+  const setWithContext = useChatSettings((s) => s.setWithContext);
 
   return (
     <div className='space-y-8'>
@@ -122,8 +122,8 @@ export default function ChatSettings() {
       </div>
       <div className='relative flex items-center space-x-2'>
         <Switch
-          checked={useContext}
-          onCheckedChange={setUseContext}
+          checked={withContext}
+          onCheckedChange={setWithContext}
           id='use-chatcontext'
         />
         <Label htmlFor='use-chatcontext'>Use Chat Context</Label>
@@ -167,8 +167,9 @@ function ApiKeyInput({
 }) {
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const provider = useChatSettings((s) => s.provider);
-  const useContext = useChatSettings((s) => s.useContext);
-  const isVisible = provider.name === name || (useContext && name === 'openai');
+  const withContext = useChatSettings((s) => s.withContext);
+  const isVisible =
+    provider.name === name || (withContext && name === 'openai');
 
   const isRequired = envKeyExist[name];
 
