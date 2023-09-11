@@ -121,16 +121,16 @@ export default function ChatSettings() {
       </div>
       <div className='space-y-2'>
         <ApiKeyInput
-          name='openai'
-          label='OpenAI API Key'
-          value={openaikey}
-          onChange={(e) => setKey('openai', e.target.value)}
-        />
-        <ApiKeyInput
           name='replicate'
           label='Replicate API Key'
           value={replicatekey}
           onChange={(e) => setKey('replicate', e.target.value)}
+        />
+        <ApiKeyInput
+          name='openai'
+          label='OpenAI API Key'
+          value={openaikey}
+          onChange={(e) => setKey('openai', e.target.value)}
         />
       </div>
     </div>
@@ -150,7 +150,9 @@ function ApiKeyInput({
 }) {
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const provider = useChatSettings((s) => s.provider);
-  const isVisible = provider.name === name;
+  const useContext = useChatSettings((s) => s.useContext);
+  const isVisible = provider.name === name || (useContext && name === 'openai');
+
   const isRequired = envKeyExist[name];
 
   if (!isVisible) return null;
