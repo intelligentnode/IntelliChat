@@ -7,7 +7,8 @@ An open-source AI chatboot app built with [IntelliNode](https://github.com/intel
 - Select your preferred AI Provider and model from the UI.
   - **OpenAI** (default): gpt-4, gpt-3.5-turbo
   - **Replicate**: 70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct.
-- Override API keys from the UI.
+  - **Azure Openai**.
+- Manage the API Keys via UI.
 
 ## Installing and Running the App
 
