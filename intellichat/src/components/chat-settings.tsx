@@ -18,17 +18,7 @@ import {
   replicateModels,
 } from '@/lib/chat-providers';
 import { Separator } from './ui/separator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from './ui/collapsible';
-import { ChevronsUpDown } from 'lucide-react';
-import { Button } from './ui/button';
-
 export default function ChatSettings() {
-  const [areKeysVisible, setKeysVisibility] = React.useState(true);
-
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
@@ -120,39 +110,51 @@ export default function ChatSettings() {
         </p>
       </div>
       <Separator orientation='horizontal' />
-      <Collapsible
-        open={areKeysVisible}
-        onOpenChange={setKeysVisibility}
-        className='space-y-2'
-      >
-        <div className='flex items-center justify-between space-x-4'>
-          <h4 className='text-sm font-semibold'>API Keys</h4>
-          <CollapsibleTrigger asChild>
-            <Button variant='ghost' size='sm' className='w-9 p-0'>
-              <ChevronsUpDown className='h-4 w-4' />
-              <span className='sr-only'>Toggle</span>
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent className='space-y-4'>
-          <div>
-            <Label htmlFor='openaiKey'>OpenAI</Label>
-            <Input
-              id='openaiKey'
-              value={openaikey}
-              onChange={(e) => setKey('openai', e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor='replicateKey'>Replicate</Label>
-            <Input
-              id='replicateKey'
-              value={replicatekey}
-              onChange={(e) => setKey('replicate', e.target.value)}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <div className='space-y-2'>
+        <ApiKeyInput
+          name='openai'
+          label='OpenAI API Key'
+          value={openaikey}
+          onChange={(e) => setKey('openai', e.target.value)}
+        />
+        <ApiKeyInput
+          name='replicate'
+          label='Replicate API Key'
+          value={replicatekey}
+          onChange={(e) => setKey('replicate', e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ApiKeyInput({
+  name,
+  label,
+  value,
+  onChange,
+}: {
+  name: 'openai' | 'replicate';
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const envKeyExist = useChatSettings((s) => s.envKeyExist);
+  const provider = useChatSettings((s) => s.provider);
+  const isVisible = provider.name === name;
+  const isRequired = envKeyExist[name];
+
+  if (!isVisible) return null;
+
+  return (
+    <div>
+      <Label htmlFor='openaiKey'>{label}</Label>
+      <Input
+        id='openaiKey'
+        value={value}
+        onChange={onChange}
+        required={isRequired}
+      />
     </div>
   );
 }
