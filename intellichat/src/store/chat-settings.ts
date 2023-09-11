@@ -27,6 +27,17 @@ type ChatSettingsState = {
     openai: string;
     replicate: string;
   };
+  envKeyExist: {
+    openai: boolean;
+    replicate: boolean;
+  };
+  setEnvKeyExist: ({
+    openai,
+    replicate,
+  }: {
+    openai: boolean;
+    replicate: boolean;
+  }) => void;
   setSystemMessage: (message: string) => void;
   setNumberOfMessages: (numberOfMessages: number) => void;
   setProvider: (provider: 'openai' | 'replicate') => void;
@@ -45,6 +56,25 @@ export const useChatSettings = create<ChatSettingsState>()(
       apiKeys: {
         openai: '',
         replicate: '',
+      },
+      envKeyExist: {
+        openai: false,
+        replicate: false,
+      },
+      setEnvKeyExist: ({
+        openai,
+        replicate,
+      }: {
+        openai: boolean;
+        replicate: boolean;
+      }) => {
+        set((state) => ({
+          envKeyExist: {
+            ...state.envKeyExist,
+            openai,
+            replicate,
+          },
+        }));
       },
       setSystemMessage: (message: string) => {
         set({ systemMessage: message });
