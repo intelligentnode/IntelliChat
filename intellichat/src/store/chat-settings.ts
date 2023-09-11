@@ -31,6 +31,8 @@ type ChatSettingsState = {
     openai: boolean;
     replicate: boolean;
   };
+  useContext: boolean;
+  setUseContext: (useContext: boolean) => void;
   setEnvKeyExist: ({
     openai,
     replicate,
@@ -49,6 +51,7 @@ type ChatSettingsState = {
 export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
+      useContext: false,
       systemMessage: defaultSystemMessage,
       provider: defaultProvider,
       isSidebarOpen: false,
@@ -60,6 +63,9 @@ export const useChatSettings = create<ChatSettingsState>()(
       envKeyExist: {
         openai: false,
         replicate: false,
+      },
+      setUseContext: (useContext: boolean) => {
+        set({ useContext });
       },
       setEnvKeyExist: ({
         openai,
@@ -92,21 +98,21 @@ export const useChatSettings = create<ChatSettingsState>()(
         }));
       },
       setProvider: (provider: 'openai' | 'replicate') => {
-        let newProvider: OpenAI | Replicate;
         if (provider === 'openai') {
+          // get default openal model
           const model = AIProviders.openai.models[0];
-          newProvider = {
-            name: 'openai',
-            model,
-          };
+          const newProvider: OpenAI = { name: 'openai', model };
+          // set new provider and context to true
+          set(() => ({ provider: newProvider, useContext: true }));
         } else {
+          // get default replicate model
           const model = AIProviders.replicate.models[0];
-          newProvider = {
-            name: 'replicate',
-            model,
-          };
+          const newProvider: Replicate = { name: 'replicate', model };
+          // set context to true if openai key is set
+          const ctx = get().envKeyExist.openai || get().apiKeys.openai !== '';
+          // set new provider and context
+          set(() => ({ provider: newProvider, useContext: ctx }));
         }
-        set(() => ({ provider: newProvider }));
       },
       setModel: (model: OpenAI['model'] | Replicate['model']) => {
         const currentProvider = get().provider.name;
