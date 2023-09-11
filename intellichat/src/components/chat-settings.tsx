@@ -17,19 +17,21 @@ import {
   openAIModels,
   replicateModels,
 } from '@/lib/chat-providers';
-import { Separator } from './ui/separator';
+import { Switch } from './ui/switch';
 export default function ChatSettings() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
   const openaikey = useChatSettings((s) => s.apiKeys.openai);
   const replicatekey = useChatSettings((s) => s.apiKeys.replicate);
+  const useContext = useChatSettings((s) => s.useContext);
 
   const updateSystemMessage = useChatSettings((s) => s.setSystemMessage);
   const setNumberOfMessages = useChatSettings((s) => s.setNumberOfMessages);
   const setKey = useChatSettings((s) => s.setKey);
   const updateProvider = useChatSettings((s) => s.setProvider);
   const updateModel = useChatSettings((s) => s.setModel);
+  const setUseContext = useChatSettings((s) => s.setUseContext);
 
   return (
     <div className='space-y-8'>
@@ -109,7 +111,14 @@ export default function ChatSettings() {
           number of messages to include in a request
         </p>
       </div>
-      <Separator orientation='horizontal' />
+      <div className='flex items-center space-x-2'>
+        <Switch
+          checked={useContext}
+          onCheckedChange={setUseContext}
+          id='use-chatcontext'
+        />
+        <Label htmlFor='use-chatcontext'>Use Chat Context</Label>
+      </div>
       <div className='space-y-2'>
         <ApiKeyInput
           name='openai'
