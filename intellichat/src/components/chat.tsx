@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
 import Container from '@/components/shared/container';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
 import { useChatSettings } from '@/store/chat-settings';
@@ -17,13 +17,11 @@ export default function Chat() {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const apiKeys = useChatSettings((s) => s.apiKeys);
+  const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+
   const { toast } = useToast();
 
   const input = React.useRef<HTMLTextAreaElement>(null);
-
-  function appendMessage(message: Message) {
-    setMessages((messages) => [...messages, message]);
-  }
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
@@ -67,6 +65,26 @@ export default function Chat() {
     },
   });
 
+  // check if api keys are set as env variables
+  const envKeysQuery = useQuery({
+    queryKey: ['apiKeys'],
+    queryFn: async () => {
+      const res = await fetch('/api');
+      if (res.ok) {
+        const json = await res.json();
+        return json as {
+          openai: boolean;
+          replicate: boolean;
+        };
+      }
+      const { error } = await res.json();
+      throw new Error(`${error}`);
+    },
+    onSuccess: (data) => {
+      setEnvKeyExist(data);
+    },
+  });
+
   const onSubmit = async () => {
     const inputText = input.current?.value;
     if (!inputText) return;
@@ -77,7 +95,7 @@ export default function Chat() {
       role: 'user',
     } as Message;
 
-    appendMessage(prompt);
+    setMessages((messages) => [...messages, prompt]);
     mutate(messages ? [...messages, prompt] : [prompt]);
     input.current!.value = '';
   };
