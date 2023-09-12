@@ -12,9 +12,10 @@ import { useChatSettings } from '@/store/chat-settings';
 import { useToast } from './ui/use-toast';
 
 export default function Chat() {
-  const [messages, setMessages] = React.useState<Message[]>([]);
   const getSettings = useChatSettings((s) => s.getSettings);
   const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+  const messages = useChatSettings((s) => s.messages);
+  const setMessage = useChatSettings((s) => s.setMessage);
 
   const { toast } = useToast();
 
@@ -46,14 +47,11 @@ export default function Chat() {
     onSuccess: (data) => {
       const { response } = data;
       if (!response) return;
-      setMessages((messages) => [
-        ...messages,
-        {
-          id: nanoid(),
-          content: response,
-          role: 'assistant',
-        },
-      ]);
+      setMessage({
+        id: nanoid(),
+        content: response,
+        role: 'assistant',
+      });
     },
     onError: (err: any) => {
       toast({
@@ -97,7 +95,7 @@ export default function Chat() {
       role: 'user',
     } as Message;
 
-    setMessages((messages) => [...messages, prompt]);
+    setMessage(prompt);
     mutate(messages ? [...messages, prompt] : [prompt]);
     input.current!.value = '';
   };
