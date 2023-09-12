@@ -13,12 +13,8 @@ import { useToast } from './ui/use-toast';
 
 export default function Chat() {
   const [messages, setMessages] = React.useState<Message[]>([]);
-  const provider = useChatSettings((s) => s.provider);
-  const systemMessage = useChatSettings((s) => s.systemMessage);
-  const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
-  const apiKeys = useChatSettings((s) => s.apiKeys);
+  const getSettings = useChatSettings((s) => s.getSettings);
   const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
-  const withContext = useChatSettings((s) => s.withContext);
 
   const { toast } = useToast();
 
@@ -26,14 +22,17 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
+      const { n, provider, providers, systemMessage, withContext } =
+        getSettings();
       const payload: PostMessagePayload = {
         messages,
         provider,
+        providers,
         systemMessage,
-        apiKeys,
         withContext,
-        n: numberOfMessages,
+        n,
       };
+      console.log(payload.provider);
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),

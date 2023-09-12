@@ -2,6 +2,10 @@
 
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+
+import { useChatSettings } from '@/store/chat-settings';
+
 import {
   Sheet,
   SheetContent,
@@ -10,21 +14,19 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
 import ChatSettings from '@/components/chat-settings';
-import { useChatSettings } from '@/store/chat-settings';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 export default function SideBar({ title }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
-  const apiKeys = useChatSettings((s) => s.apiKeys);
+  const getProvider = useChatSettings((s) => s.getProvider);
   const provider = useChatSettings((s) => s.provider);
 
   // Open the settings sheet if the user has not set the API keys
   useEffect(() => {
-    if (!envKeyExist[provider.name] && apiKeys[provider.name].trim() === '') {
+    if (!envKeyExist[provider] && getProvider(provider).apiKey.trim() === '') {
       setIsOpen(true);
     }
   }, []);
@@ -33,7 +35,11 @@ export default function SideBar({ title }: { title?: string }) {
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <SheetTrigger asChild>
         <Button variant='ghost' className='p-0 px-2'>
-          <Settings className='h-6 w-6' />
+          {isOpen ? (
+            <PanelLeftOpen className='h-6 w-6' />
+          ) : (
+            <PanelLeftClose className='h-6 w-6' />
+          )}
           <span className='sr-only'>Toggle Settings</span>
         </Button>
       </SheetTrigger>
@@ -47,11 +53,7 @@ export default function SideBar({ title }: { title?: string }) {
               <SheetTitle>{title}</SheetTitle>
             </SheetHeader>
             <TooltipProvider>
-              <ChatSettings
-                closeSidebar={() => {
-                  setIsOpen(false);
-                }}
-              />
+              <ChatSettings />
             </TooltipProvider>
           </>
         )}

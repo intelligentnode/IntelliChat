@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server';
-import { ChatContext, Chatbot } from 'intellinode';
 import { chatbotValidator } from '@/lib/validators';
 import {
-  addMessages,
-  getChatInput,
+  getAzureChatResponse,
   getChatProviderKey,
+  getChatResponse,
 } from '@/lib/intellinode';
 
 const defaultSystemMessage =
   'You are a helpful assistant. Format response in Markdown where needed.';
-const defaultProvider = {
-  name: 'openai' as const,
-  model: 'gpt-3.5-turbo' as const,
-};
+const defaultProvider = 'openai';
 
 export async function POST(req: Request) {
   const json = await req.json();
@@ -26,7 +22,7 @@ export async function POST(req: Request) {
 
   const {
     messages,
-    apiKeys,
+    providers,
     provider = defaultProvider,
     systemMessage = defaultSystemMessage,
     n = 2,
@@ -34,8 +30,8 @@ export async function POST(req: Request) {
   } = parsedJson.data;
 
   const key =
-    (apiKeys && apiKeys[provider.name]) || getChatProviderKey(provider.name);
-  const contextKey = apiKeys?.openai || getChatProviderKey('openai');
+    (provider && providers[provider]?.apiKey) || getChatProviderKey(provider);
+  const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
 
   if (!key) {
     return NextResponse.json(
@@ -61,40 +57,29 @@ export async function POST(req: Request) {
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
   const chatProvider = provider || defaultProvider;
 
-  // context is always true if the chat provider is openai
-  const useContext = chatProvider.name === 'openai' || withContext;
-
   try {
-    const chatbot = new Chatbot(key, chatProvider.name);
-    // get the input for the chatbot
-    const input = getChatInput(
-      chatProvider.name,
-      chatProvider.model,
-      chatSystemMessage
-    );
-    // add the messages to the input
-    // if the user wants to use context, get the context and add it to the input
-    // otherwise, just add the messages
-    if (useContext) {
-      const contextProvider = defaultProvider;
-      const context = new ChatContext(contextKey, contextProvider.name);
-      // extract the last message from the array; this is the user's message
-      const userMessage = messages[messages.length - 1].content;
-      // get the closest context to the user's message
-      const contextResponse = await context.getRoleContext(
-        userMessage,
+    if (chatProvider === 'azure' && providers.azure) {
+      const responses = await getAzureChatResponse({
+        provider: { ...providers.azure, apiKey: key },
+        systemMessage: chatSystemMessage,
+        withContext,
         messages,
-        n
-      );
-      addMessages(input, contextResponse);
-    } else {
-      addMessages(input, messages);
+        n,
+      });
+      return NextResponse.json({ response: responses });
+    } else if (providers[provider] && providers[provider].name !== 'azure') {
+      const responses = await getChatResponse({
+        provider: { ...providers[provider], apiKey: key },
+        systemMessage: chatSystemMessage,
+        withContext,
+        contextKey,
+        messages,
+        n,
+      });
+      return NextResponse.json({ response: responses });
     }
-
-    const response = await chatbot.chat(input);
-
-    return NextResponse.json({ response: response[0] });
-  } catch (e: any) {
+  } catch (e) {
+    console.log(e);
     return NextResponse.json(
       {
         error: 'invalid api key or provider',

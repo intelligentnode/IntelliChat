@@ -2,10 +2,19 @@ declare module 'intellinode' {
   type SupportedChatModels = 'openai' | 'replicate' | 'sagemaker';
 
   class Chatbot {
-    constructor(keyValue?: string, provider?: string);
+    constructor(
+      keyValue?: string,
+      provider?: string,
+      customProxy?: ProxyHelper
+    );
     chat(modelInput?: ChatGPTInput | LLamaReplicateInput);
   }
   class ChatGPTInput {
+    model: string = 'gpt-3.5-turbo';
+    temperature: number = 1;
+    maxTokens: number | null = null;
+    numberOfOutputs: number = 1;
+
     constructor(
       systemMessage: string,
       options?: {
@@ -31,11 +40,20 @@ declare module 'intellinode' {
   }
 
   class ChatContext {
-    constructor(apiKey: string, provider?: SupportedChatModels);
+    constructor(
+      apiKey: string,
+      provider?: SupportedChatModels,
+      customProxy?: ProxyHelper | null
+    );
     getRoleContext(
       userMessage: string,
       historyMessages: { role: 'user' | 'assistant'; content: string }[],
-      n: number
+      n: number,
+      embeddingName?: string | null
     );
+  }
+  class ProxyHelper {
+    static getInstance(): ProxyHelper;
+    setAzureOpenai(resourceName: string): void;
   }
 }
