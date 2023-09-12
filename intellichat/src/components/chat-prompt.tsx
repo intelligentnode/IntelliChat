@@ -13,6 +13,7 @@ export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
     const { isLoading, onSubmit } = props;
 
     const onEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (isLoading) return;
       if (event.key === 'Enter') {
         event.preventDefault();
         onSubmit();
@@ -39,6 +40,7 @@ export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
             className='absolute right-4 top-3 h-11 w-16 p-0'
             onClick={onSubmit}
             variant='default'
+            disabled={isLoading}
           >
             <CornerDownLeft />
           </Button>
