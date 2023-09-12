@@ -37,6 +37,7 @@
     "postcss": "8.4.29",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-github-btn": "^1.4.0",
     "react-hook-form": "^7.46.1",
     "react-markdown": "8.0.7",
     "tailwind-merge": "1.14.0",
