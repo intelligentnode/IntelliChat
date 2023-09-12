@@ -1,21 +1,6 @@
-import {
-  AIProviderType,
-  AIProviders,
-  defaultProvider,
-} from '@/lib/chat-providers';
+import { OpenAI, Replicate, defaultProvider } from '@/lib/chat-providers';
 import { create } from 'zustand';
-
-const defaultSystemMessage = 'You are a helpful assistant!';
-
-type OpenAI = {
-  name: AIProviderType['openai']['name'];
-  model: AIProviderType['openai']['models'][number];
-};
-
-type Replicate = {
-  name: AIProviderType['replicate']['name'];
-  model: AIProviderType['replicate']['models'][number];
-};
+import { persist } from 'zustand/middleware';
 
 type ChatSettingsState = {
   isSidebarOpen: boolean;
@@ -26,77 +11,67 @@ type ChatSettingsState = {
     openai: string;
     replicate: string;
   };
-  setSystemMessage: (message: string) => void;
-  setNumberOfMessages: (numberOfMessages: number) => void;
-  setProvider: (provider: 'openai' | 'replicate') => void;
-  setModel: (model: OpenAI['model'] | Replicate['model']) => void;
-  setKey: (provider: 'openai' | 'replicate', key: string) => void;
+  envKeyExist: {
+    openai: boolean;
+    replicate: boolean;
+  };
+  withContext: boolean;
+  setEnvKeyExist: ({
+    openai,
+    replicate,
+  }: {
+    openai: boolean;
+    replicate: boolean;
+  }) => void;
+  updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
 };
 
-export const useChatSettings = create<ChatSettingsState>((set, get) => ({
-  systemMessage: defaultSystemMessage,
-  provider: defaultProvider,
-  isSidebarOpen: false,
-  numberOfMessages: 4,
-  apiKeys: {
-    openai: '',
-    replicate: '',
-  },
-  setSystemMessage: (message: string) => {
-    set({ systemMessage: message });
-  },
-  setNumberOfMessages: (numberOfMessages: number) => {
-    if (numberOfMessages < 4 || numberOfMessages > 8) return;
-    set({ numberOfMessages });
-  },
-  setKey: (provider: 'openai' | 'replicate', key: string) => {
-    set((state) => ({
+export const useChatSettings = create<ChatSettingsState>()(
+  persist(
+    (set, get) => ({
+      withContext: true,
+      systemMessage: '',
+      provider: defaultProvider,
+      isSidebarOpen: false,
+      numberOfMessages: 4,
       apiKeys: {
-        ...state.apiKeys,
-        [provider]: key,
+        openai: '',
+        replicate: '',
       },
-    }));
-  },
-  setProvider: (provider: 'openai' | 'replicate') => {
-    let newProvider: OpenAI | Replicate;
-    if (provider === 'openai') {
-      const model = AIProviders.openai.models[0];
-      newProvider = {
-        name: 'openai',
-        model,
-      };
-    } else {
-      const model = AIProviders.replicate.models[0];
-      newProvider = {
-        name: 'replicate',
-        model,
-      };
+      envKeyExist: {
+        openai: false,
+        replicate: false,
+      },
+      updateChatSettings: (settings: Partial<ChatSettingsState>) => {
+        set((state) => ({
+          ...state,
+          ...settings,
+        }));
+      },
+      setEnvKeyExist: ({
+        openai,
+        replicate,
+      }: {
+        openai: boolean;
+        replicate: boolean;
+      }) => {
+        set((state) => ({
+          envKeyExist: {
+            ...state.envKeyExist,
+            openai,
+            replicate,
+          },
+        }));
+      },
+      toggleSidebar: () => {
+        set((state) => ({
+          isSidebarOpen: !state.isSidebarOpen,
+        }));
+      },
+    }),
+    {
+      name: 'chat-settings',
     }
-    set(() => ({ provider: newProvider }));
-  },
-  setModel: (model: OpenAI['model'] | Replicate['model']) => {
-    const currentProvider = get().provider.name;
-    if (currentProvider === 'openai') {
-      set((state) => ({
-        provider: {
-          ...(state.provider as OpenAI),
-          model: model as OpenAI['model'],
-        },
-      }));
-    } else {
-      set((state) => ({
-        provider: {
-          ...(state.provider as Replicate),
-          model: model as Replicate['model'],
-        },
-      }));
-    }
-  },
-
-  toggleSidebar: () => {
-    set((state) => ({
-      isSidebarOpen: !state.isSidebarOpen,
-    }));
-  },
-}));
+  )
+);

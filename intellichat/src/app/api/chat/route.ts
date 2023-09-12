@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     provider = defaultProvider,
     systemMessage = defaultSystemMessage,
     n = 2,
+    withContext,
   } = parsedJson.data;
 
   const key =
@@ -59,7 +60,9 @@ export async function POST(req: Request) {
   const chatSystemMessage =
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
   const chatProvider = provider || defaultProvider;
-  const contextProvider = defaultProvider;
+
+  // context is always true if the chat provider is openai
+  const useContext = chatProvider.name === 'openai' || withContext;
 
   try {
     const chatbot = new Chatbot(key, chatProvider.name);
@@ -69,18 +72,25 @@ export async function POST(req: Request) {
       chatProvider.model,
       chatSystemMessage
     );
-    const context = new ChatContext(contextKey, contextProvider.name);
-    // extract the last message from the array; this is the user's message
-    const userMessage = messages[messages.length - 1].content;
-    // get the closest context to the user's message
-    const contextResponse = await context.getRoleContext(
-      userMessage,
-      messages,
-      n
-    );
+    // add the messages to the input
+    // if the user wants to use context, get the context and add it to the input
+    // otherwise, just add the messages
+    if (useContext) {
+      const contextProvider = defaultProvider;
+      const context = new ChatContext(contextKey, contextProvider.name);
+      // extract the last message from the array; this is the user's message
+      const userMessage = messages[messages.length - 1].content;
+      // get the closest context to the user's message
+      const contextResponse = await context.getRoleContext(
+        userMessage,
+        messages,
+        n
+      );
+      addMessages(input, contextResponse);
+    } else {
+      addMessages(input, messages);
+    }
 
-    // append the context messages to the chat input
-    addMessages(input, contextResponse);
     const response = await chatbot.chat(input);
 
     return NextResponse.json({ response: response[0] });

@@ -1,9 +1,21 @@
+'use client';
+
 import React from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  OpenAI,
+  Replicate,
+  openAIModels,
+  replicateModels,
+} from '@/lib/chat-providers';
 
 import { useChatSettings } from '@/store/chat-settings';
+import { AIProviderType, AIProviders } from '@/lib/chat-providers';
 
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -11,148 +23,279 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import {
-  AIProviders,
-  openAIModels,
-  replicateModels,
-} from '@/lib/chat-providers';
-import { Separator } from './ui/separator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from './ui/collapsible';
-import { ChevronsUpDown } from 'lucide-react';
-import { Button } from './ui/button';
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import FieldTooltip from '@/components/field-tooltip';
 
-export default function ChatSettings() {
-  const [areKeysVisible, setKeysVisibility] = React.useState(true);
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import ApiKeyInput from './apikey-input';
 
+const formSchema = z
+  .object({
+    systemMessage: z.string(),
+    numberOfMessages: z.number(),
+    providerName: z.string(),
+    providerModel: z.string(),
+    openaiKey: z.string(),
+    replicateKey: z.string(),
+    withContext: z.boolean(),
+    envKeyExist: z.object({
+      openai: z.boolean(),
+      replicate: z.boolean(),
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      (data.providerModel === 'openai' || data.withContext) &&
+      !data.envKeyExist.openai &&
+      !data.openaiKey
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'OpenAI API Key is required.',
+        path: ['openaiKey'],
+      });
+    }
+    if (
+      data.providerModel === 'replicate' &&
+      !data.envKeyExist.replicate &&
+      !data.replicateKey
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Replicate API Key is required.',
+        path: ['replicateKey'],
+      });
+    }
+  });
+
+export default function ChatSettings({
+  closeSidebar,
+}: {
+  closeSidebar: () => void;
+}) {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
   const openaikey = useChatSettings((s) => s.apiKeys.openai);
   const replicatekey = useChatSettings((s) => s.apiKeys.replicate);
+  const withContext = useChatSettings((s) => s.withContext);
+  const envKeyExist = useChatSettings((s) => s.envKeyExist);
+  const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
 
-  const updateSystemMessage = useChatSettings((s) => s.setSystemMessage);
-  const setNumberOfMessages = useChatSettings((s) => s.setNumberOfMessages);
-  const setKey = useChatSettings((s) => s.setKey);
-  const updateProvider = useChatSettings((s) => s.setProvider);
-  const updateModel = useChatSettings((s) => s.setModel);
+  const form = useForm<z.infer<typeof formSchema>>({
+    defaultValues: {
+      systemMessage,
+      numberOfMessages,
+      providerName: provider.name,
+      providerModel: provider.model,
+      openaiKey: openaikey,
+      replicateKey: replicatekey,
+      withContext,
+      envKeyExist: {
+        openai: envKeyExist.openai,
+        replicate: envKeyExist.replicate,
+      },
+    },
+    resolver: zodResolver(formSchema),
+  });
+
+  function onSubmit({
+    envKeyExist,
+    providerName,
+    providerModel,
+    openaiKey,
+    replicateKey,
+    ...values
+  }: z.infer<typeof formSchema>) {
+    let provider: OpenAI | Replicate;
+
+    if (providerName === 'openai') {
+      provider = {
+        name: providerName,
+        model: providerModel as OpenAI['model'],
+      };
+    } else {
+      provider = {
+        name: 'replicate',
+        model: providerModel as Replicate['model'],
+      };
+    }
+    updateChatSettings({
+      provider,
+      apiKeys: {
+        openai: openaiKey,
+        replicate: replicateKey,
+      },
+      ...values,
+    });
+    closeSidebar();
+  }
 
   return (
-    <div className='space-y-8'>
-      <div className='space-y-1'>
-        <Label htmlFor='systemMsg'>System Message</Label>
-        <Input
-          id='systemMsg'
-          value={systemMessage}
-          onChange={(e) => {
-            updateSystemMessage(e.target.value);
-          }}
-        />
-      </div>
-      <div className='space-y-1'>
-        <Label>Provider</Label>
-        <Select
-          value={provider.name}
-          defaultValue='openai'
-          onValueChange={(e: string) => {
-            updateProvider(e as keyof typeof AIProviders);
-          }}
-        >
-          <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Select a Model' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {Object.keys(AIProviders).map((key) => (
-                <SelectItem key={key} value={key}>
-                  {AIProviders[key as keyof typeof AIProviders].name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className='space-y-1'>
-        <Label>Models</Label>
-        <Select
-          value={provider.model}
-          defaultValue='davinci'
-          onValueChange={(e: string) => {
-            updateModel(
-              e as
-                | (typeof openAIModels)[number]
-                | (typeof replicateModels)[number]
-            );
-          }}
-        >
-          <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Select a Model' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {AIProviders[provider.name].models.map((model) => (
-                <SelectItem key={model} value={model}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className='space-y-0'>
-        <Label htmlFor='systemMsg'>Number of Messages</Label>
-        <Input
-          id='systemMsg'
-          type='number'
-          min={4}
-          max={8}
-          value={numberOfMessages}
-          onChange={(e) => {
-            setNumberOfMessages(parseInt(e.target.value));
-          }}
-        />
-        <p className='text-xs  text-zinc-300'>
-          number of messages to include in a request
-        </p>
-      </div>
-      <Separator orientation='horizontal' />
-      <Collapsible
-        open={areKeysVisible}
-        onOpenChange={setKeysVisibility}
-        className='space-y-2'
-      >
-        <div className='flex items-center justify-between space-x-4'>
-          <h4 className='text-sm font-semibold'>API Keys</h4>
-          <CollapsibleTrigger asChild>
-            <Button variant='ghost' size='sm' className='w-9 p-0'>
-              <ChevronsUpDown className='h-4 w-4' />
-              <span className='sr-only'>Toggle</span>
-            </Button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent className='space-y-4'>
-          <div>
-            <Label htmlFor='openaiKey'>OpenAI</Label>
-            <Input
-              id='openaiKey'
-              value={openaikey}
-              onChange={(e) => setKey('openai', e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor='replicateKey'>Replicate</Label>
-            <Input
-              id='replicateKey'
-              value={replicatekey}
-              onChange={(e) => setKey('replicate', e.target.value)}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+    <ScrollArea className='h-full'>
+      <Form {...form}>
+        <form className='space-y-8' onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name='systemMessage'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>System Message</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='You are a helpful assistant!'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='numberOfMessages'
+            render={({ field }) => (
+              <FormItem>
+                <div className='flex items-center justify-between gap-2'>
+                  <FormLabel>Number of Messages</FormLabel>
+                  <FieldTooltip>
+                    The number of messages to include in a request. The higher
+                    the number, the more context the AI will have to work with.
+                    This will determine the number of messages used to generate
+                    the context when the "Use Chat Context" option is enabled.
+                  </FieldTooltip>
+                </div>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type='number'
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='providerName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Provider</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={(e) => {
+                      field.onChange(e);
+                      form.setValue(
+                        'providerModel',
+                        AIProviders[e as keyof AIProviderType].models[0]
+                      );
+                    }}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className='w-[180px]'>
+                      <SelectValue placeholder='Select a Model' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Object.keys(AIProviders).map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {AIProviders[key as keyof typeof AIProviders].name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='providerModel'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Model</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className='w-[180px]'>
+                      <SelectValue>{field.value}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {AIProviders[
+                          form.watch('providerName') as keyof AIProviderType
+                        ].models.map((model) => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='withContext'
+            render={({ field }) => (
+              <FormItem className='flex items-center justify-between gap-2 space-y-0'>
+                <div className='flex items-center gap-2'>
+                  <FormLabel>Context</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </div>
+                <FieldTooltip>
+                  When enabled, the chatbot wil dynamically select previous
+                  parts of the conversation that are most relevant to the
+                  current query, using embeddings. The number of parts will be
+                  equal to the number of messages set above.
+                </FieldTooltip>
+              </FormItem>
+            )}
+          />
+          <ApiKeyInput
+            control={form.control}
+            id='openai'
+            name='openaiKey'
+            label='OpenAI API Key'
+            provider={form.watch('providerName') as keyof AIProviderType}
+            withContext={form.watch('withContext')}
+          />
+
+          <ApiKeyInput
+            control={form.control}
+            id='replicate'
+            name='replicateKey'
+            label='Replicate API Key'
+            provider={form.watch('providerName') as keyof AIProviderType}
+            withContext={form.watch('withContext')}
+          />
+          <Button type='submit'>Save</Button>
+        </form>
+      </Form>
+    </ScrollArea>
   );
 }
