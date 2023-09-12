@@ -89,7 +89,9 @@ export const useChatSettings = create<ChatSettingsState>()(
         } else if (provider === 'azure') {
           return get().azure;
         } else {
-          throw new Error('provider is not supported');
+          // return default provider
+          console.log('returning default provider');
+          return get().openai;
         }
       },
       getModel: (provider: 'openai' | 'replicate' | 'azure') => {
