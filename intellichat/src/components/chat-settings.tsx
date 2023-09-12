@@ -88,8 +88,27 @@ export default function ChatSettings() {
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const getModel = useChatSettings((s) => s.getModel);
   const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
+  const resetKeys = useChatSettings((s) => s.resetKeys);
+  const hasKey = openai.apiKey || replicate.apiKey || azure.apiKey;
 
   const form = useForm<z.infer<typeof formSchema>>({
+    values: {
+      systemMessage,
+      numberOfMessages,
+      providerName: provider,
+      providerModel: getModel(),
+      openaiKey: openai.apiKey,
+      replicateKey: replicate.apiKey,
+      azureKey: azure.apiKey,
+      azureResourceName: azure.resourceName,
+      azureModelName: azure.model,
+      azureEmbeddingName: azure.embeddingName,
+      withContext,
+      envKeyExist: {
+        openai: envKeyExist.openai,
+        replicate: envKeyExist.replicate,
+      },
+    },
     defaultValues: {
       systemMessage,
       numberOfMessages,
@@ -386,7 +405,17 @@ export default function ChatSettings() {
               </FormItem>
             )}
           />
-          <Button type='submit'>Save</Button>
+          <div className='flex justify-between'>
+            <Button type='submit'>Save</Button>
+            <Button
+              disabled={!hasKey}
+              type='button'
+              variant={hasKey ? 'destructive' : 'outline'}
+              onClick={resetKeys}
+            >
+              Reset Keys
+            </Button>
+          </div>
         </form>
       </Form>
     </ScrollArea>
