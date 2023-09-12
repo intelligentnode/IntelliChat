@@ -46,7 +46,7 @@ export default function SideBar({ title }: { title?: string }) {
         </Button>
       </SheetTrigger>
       <SheetContent
-        className='border-none pt-[calc(var(--header-height)+1rem)]'
+        className='border-none bg-zinc-900 px-14 pt-[calc(var(--header-height)+1rem)]'
         side='right'
       >
         {pathname === '/' && (
