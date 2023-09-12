@@ -200,10 +200,10 @@ export default function ChatSettings() {
                 <div className='flex items-center justify-between gap-2'>
                   <FormLabel>Number of Messages</FormLabel>
                   <FieldTooltip>
-                    The number of messages to include in a request. The higher
+                    {`The number of messages to include in a request. The higher
                     the number, the more context the AI will have to work with.
                     This will determine the number of messages used to generate
-                    the context when the "Use Chat Context" option is enabled.
+                    the context when the "Use Chat Context" option is enabled.`}
                   </FieldTooltip>
                 </div>
                 <FormControl>
@@ -378,10 +378,10 @@ export default function ChatSettings() {
                   </FormControl>
                 </div>
                 <FieldTooltip>
-                  When enabled, the chatbot wil dynamically select previous
+                  {`When enabled, the chatbot wil dynamically select previous
                   parts of the conversation that are most relevant to the
                   current query, using embeddings. The number of parts will be
-                  equal to the number of messages set above.
+                  equal to the number of messages set above.`}
                 </FieldTooltip>
               </FormItem>
             )}

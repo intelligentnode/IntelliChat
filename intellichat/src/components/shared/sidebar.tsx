@@ -29,7 +29,7 @@ export default function SideBar({ title }: { title?: string }) {
     if (!envKeyExist[provider] && providerkey.trim() === '') {
       setIsOpen(true);
     }
-  }, [provider, envKeyExist]);
+  }, [provider, envKeyExist, providerkey]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
