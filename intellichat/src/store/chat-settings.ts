@@ -1,11 +1,11 @@
 import { Azure, OpenAI, Replicate } from '@/lib/chat-providers';
+import { Message } from '@/lib/types';
 import {
   PostMessagePayload,
   azureType,
   openAIType,
   replicateType,
 } from '@/lib/validators';
-import { Message } from 'postcss';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -168,6 +168,10 @@ export const useChatSettings = create<ChatSettingsState>()(
       },
     }),
     {
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !['messages'].includes(key))
+        ),
       name: 'chat-settings',
     }
   )
