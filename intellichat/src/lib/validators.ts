@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
-const openAI = z.object({
+export const openAIValidator = z.object({
   name: z.literal('openai'),
   model: z.enum(['gpt-3.5-turbo', 'gpt-4']),
+  apiKey: z.string(),
 });
 
-const replicate = z.object({
+export const replicateValidator = z.object({
   name: z.literal('replicate'),
   model: z.enum([
     '70b-chat',
@@ -14,6 +15,15 @@ const replicate = z.object({
     '34b-python',
     '13b-code-instruct',
   ]),
+  apiKey: z.string(),
+});
+
+export const azureValidator = z.object({
+  name: z.literal('azure'),
+  model: z.string(),
+  resourceName: z.string(),
+  embeddingName: z.string(),
+  apiKey: z.string(),
 });
 
 export const chatbotValidator = z.object({
@@ -23,16 +33,20 @@ export const chatbotValidator = z.object({
       role: z.enum(['user', 'assistant']),
     })
   ),
-  apiKeys: z
-    .object({
-      openai: z.string().optional(),
-      replicate: z.string().optional(),
-    })
-    .optional(),
-  provider: z.union([openAI, replicate]).optional(),
+  provider: z.enum(['openai', 'replicate', 'azure']),
+  providers: z.object({
+    openai: openAIValidator.optional(),
+    replicate: replicateValidator.optional(),
+    azure: azureValidator.optional(),
+  }),
+
   systemMessage: z.string().optional(),
   withContext: z.boolean(),
   n: z.number().optional(),
 });
+
+export type azureType = z.infer<typeof azureValidator>;
+export type openAIType = z.infer<typeof openAIValidator>;
+export type replicateType = z.infer<typeof replicateValidator>;
 
 export type PostMessagePayload = z.infer<typeof chatbotValidator>;

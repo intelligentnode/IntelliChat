@@ -23,11 +23,21 @@ export const defaultProvider = {
 export type AIProviderType = typeof AIProviders;
 
 export type OpenAI = {
-  name: AIProviderType['openai']['name'];
+  name: 'openai';
   model: AIProviderType['openai']['models'][number];
+  apiKey: string;
 };
 
 export type Replicate = {
-  name: AIProviderType['replicate']['name'];
+  name: 'replicate';
   model: AIProviderType['replicate']['models'][number];
+  apiKey: string;
+};
+
+export type Azure = {
+  name: 'azure';
+  model: string;
+  resourceName: string;
+  embeddingName: string;
+  apiKey: string;
 };
