@@ -32,7 +32,6 @@ export default function Chat() {
         withContext,
         n,
       };
-      console.log(payload.provider);
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
