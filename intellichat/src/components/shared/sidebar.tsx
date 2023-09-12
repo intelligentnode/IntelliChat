@@ -23,16 +23,13 @@ export default function SideBar({ title }: { title?: string }) {
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const getProvider = useChatSettings((s) => s.getProvider);
   const provider = useChatSettings((s) => s.provider);
-
+  const providerkey = getProvider(provider).apiKey;
   // Open the settings sheet if the user has not set the API keys
   useEffect(() => {
-    if (
-      !envKeyExist[provider] &&
-      getProvider(provider ?? 'openai')?.apiKey.trim() === ''
-    ) {
+    if (!envKeyExist[provider] && providerkey.trim() === '') {
       setIsOpen(true);
     }
-  }, [provider]);
+  }, [provider, envKeyExist]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
