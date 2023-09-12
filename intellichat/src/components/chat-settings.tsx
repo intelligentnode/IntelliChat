@@ -77,7 +77,7 @@ const formSchema = z
     }
   });
 
-export default function ChatSettings() {
+export default function ChatSettings({ close }: { close: () => void }) {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
@@ -169,6 +169,7 @@ export default function ChatSettings() {
       },
       ...values,
     });
+    close();
   }
 
   function onChangeProviderName(name: string) {
