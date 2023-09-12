@@ -37,7 +37,7 @@ import ApiKeyInput from './apikey-input';
 const formSchema = z
   .object({
     systemMessage: z.string(),
-    numberOfMessages: z.number(),
+    numberOfMessages: z.number().min(2).max(6),
     providerName: z.enum(['openai', 'replicate', 'azure']),
     providerModel: z.string(),
     openaiKey: z.string(),
@@ -210,6 +210,8 @@ export default function ChatSettings() {
                   <Input
                     {...field}
                     type='number'
+                    min={2}
+                    max={6}
                     onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
