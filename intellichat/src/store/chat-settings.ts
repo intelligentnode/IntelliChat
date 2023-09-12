@@ -29,9 +29,10 @@ type ChatSettingsState = {
     openai: boolean;
     replicate: boolean;
   }) => void;
-  getModel: (provider: 'openai' | 'replicate' | 'azure') => string;
+  getModel: () => string;
+  getExistsInEnv: () => boolean;
   getSettings: () => Omit<PostMessagePayload, 'messages'>;
-  getProvider: (provider: 'openai' | 'replicate' | 'azure') => any;
+  getProvider: () => Azure | OpenAI | Replicate;
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
 };
@@ -66,6 +67,10 @@ export const useChatSettings = create<ChatSettingsState>()(
         replicate: false,
         azure: false,
       },
+      getExistsInEnv: () => {
+        const provider = get().provider;
+        return get().envKeyExist[provider];
+      },
       getSettings: () => {
         const provider = get().provider;
         let settings: Omit<PostMessagePayload, 'messages'> = {
@@ -81,7 +86,8 @@ export const useChatSettings = create<ChatSettingsState>()(
         };
         return settings;
       },
-      getProvider: (provider: 'openai' | 'replicate' | 'azure') => {
+      getProvider: () => {
+        const provider = get().provider;
         if (provider === 'openai') {
           return get().openai;
         } else if (provider === 'replicate') {
@@ -94,7 +100,8 @@ export const useChatSettings = create<ChatSettingsState>()(
           return get().openai;
         }
       },
-      getModel: (provider: 'openai' | 'replicate' | 'azure') => {
+      getModel: () => {
+        const provider = get().provider;
         if (provider === 'openai') {
           return get().openai.model;
         } else if (provider === 'replicate') {
@@ -102,7 +109,9 @@ export const useChatSettings = create<ChatSettingsState>()(
         } else if (provider === 'azure') {
           return get().azure.model;
         } else {
-          throw new Error('provider is not supported');
+          // return default model
+          console.log('returning default model');
+          return get().openai.model;
         }
       },
       updateChatSettings: (settings: Partial<ChatSettingsState>) => {
