@@ -35,7 +35,7 @@ export default function ApiKeyInput({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input {...field} />
+            <Input {...field} type='password' autoComplete={`${id}-apiKey`} />
           </FormControl>
           {envKeyExist[id] && (
             <FormDescription>
