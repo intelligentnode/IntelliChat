@@ -94,7 +94,7 @@ export default function ChatSettings() {
       systemMessage,
       numberOfMessages,
       providerName: provider,
-      providerModel: getModel(provider),
+      providerModel: getModel(),
       openaiKey: openai.apiKey,
       replicateKey: replicate.apiKey,
       azureKey: azure.apiKey,

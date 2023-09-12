@@ -20,16 +20,18 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 export default function SideBar({ title }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
-  const envKeyExist = useChatSettings((s) => s.envKeyExist);
+  const getExistsInEnv = useChatSettings((s) => s.getExistsInEnv);
   const getProvider = useChatSettings((s) => s.getProvider);
   const provider = useChatSettings((s) => s.provider);
-  const providerkey = getProvider(provider).apiKey;
+  const providerkey = getProvider().apiKey;
   // Open the settings sheet if the user has not set the API keys
   useEffect(() => {
-    if (!envKeyExist[provider] && providerkey.trim() === '') {
+    const exists = getExistsInEnv();
+    const key = providerkey.trim();
+    if (!exists && key === '') {
       setIsOpen(true);
     }
-  }, [provider, envKeyExist, providerkey]);
+  }, [provider, getExistsInEnv, providerkey]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
