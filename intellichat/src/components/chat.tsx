@@ -70,6 +70,8 @@ export default function Chat() {
   // check if api keys are set as env variables
   const envKeysQuery = useQuery({
     queryKey: ['apiKeys'],
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await fetch('/api');
       if (res.ok) {

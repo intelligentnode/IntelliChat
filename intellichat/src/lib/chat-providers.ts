@@ -21,3 +21,13 @@ export const defaultProvider = {
 };
 
 export type AIProviderType = typeof AIProviders;
+
+export type OpenAI = {
+  name: AIProviderType['openai']['name'];
+  model: AIProviderType['openai']['models'][number];
+};
+
+export type Replicate = {
+  name: AIProviderType['replicate']['name'];
+  model: AIProviderType['replicate']['models'][number];
+};

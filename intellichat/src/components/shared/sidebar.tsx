@@ -47,7 +47,11 @@ export default function SideBar({ title }: { title?: string }) {
               <SheetTitle>{title}</SheetTitle>
             </SheetHeader>
             <TooltipProvider>
-              <ChatSettings />
+              <ChatSettings
+                closeSidebar={() => {
+                  setIsOpen(false);
+                }}
+              />
             </TooltipProvider>
           </>
         )}
