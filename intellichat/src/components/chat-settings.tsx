@@ -316,7 +316,11 @@ export default function ChatSettings({ close }: { close: () => void }) {
                   <FormItem>
                     <FormLabel>Azure API Key</FormLabel>
                     <FormControl>
-                      <Input {...field} type='password' />
+                      <Input
+                        {...field}
+                        type='password'
+                        autoComplete='azure-apiKey'
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
