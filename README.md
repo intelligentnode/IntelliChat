@@ -1,6 +1,6 @@
 # IntelliChat
 
-An open-source AI chatboot app built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and [Next.js](https://nextjs.org/).
+An open-source AI chatboot app built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and Next.js.
 
 ## Features
 
@@ -9,6 +9,9 @@ An open-source AI chatboot app built with [IntelliNode](https://github.com/intel
   - **Replicate**: 70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct.
   - **Azure Openai**.
 - Manage the API Keys via UI.
+
+
+<img src="images/intellichat-screenshot-v1.png" width="650em">
 
 ## Installing and Running the App
 
