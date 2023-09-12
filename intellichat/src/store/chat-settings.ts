@@ -5,10 +5,12 @@ import {
   openAIType,
   replicateType,
 } from '@/lib/validators';
+import { Message } from 'postcss';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 type ChatSettingsState = {
+  messages: Message[];
   isSidebarOpen: boolean;
   systemMessage: string;
   provider: 'openai' | 'replicate' | 'azure';
@@ -35,6 +37,9 @@ type ChatSettingsState = {
   getProvider: () => Azure | OpenAI | Replicate;
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
+  setMessage: (message: Message) => void;
+  clearMessages: () => void;
+  resetKeys: () => void;
 };
 
 export const useChatSettings = create<ChatSettingsState>()(
@@ -43,8 +48,9 @@ export const useChatSettings = create<ChatSettingsState>()(
       withContext: true,
       systemMessage: '',
       provider: 'openai',
-      isSidebarOpen: false,
       numberOfMessages: 4,
+      messages: [],
+      isSidebarOpen: false,
       azure: {
         name: 'azure',
         model: '',
@@ -66,6 +72,26 @@ export const useChatSettings = create<ChatSettingsState>()(
         openai: false,
         replicate: false,
         azure: false,
+      },
+      clearMessages: () => {
+        set((state) => ({
+          ...state,
+          messages: [],
+        }));
+      },
+      setMessage: (message: Message) => {
+        set((state) => ({
+          ...state,
+          messages: [...state.messages, message],
+        }));
+      },
+      resetKeys: () => {
+        set((state) => ({
+          ...state,
+          openai: { ...state.openai, apiKey: '' },
+          replicate: { ...state.replicate, apiKey: '' },
+          azure: { ...state.azure, apiKey: '' },
+        }));
       },
       getExistsInEnv: () => {
         const provider = get().provider;
