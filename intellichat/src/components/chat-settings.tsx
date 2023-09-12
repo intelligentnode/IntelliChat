@@ -315,7 +315,7 @@ export default function ChatSettings() {
                   <FormItem>
                     <FormLabel>Azure API Key</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} type='password' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
