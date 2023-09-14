@@ -1,6 +1,9 @@
 # IntelliChat
+<a href="https://discord.gg/VYgCh2p3Ww" alt="licenses tag">
+    <img src="https://img.shields.io/badge/Discord-Community-light?style=flat-square" />
+</a>
 
-An open-source AI chatboot app built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and Next.js.
+IntelliChat is an open-source AI chatbot built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and Next.js. It is designed to accelerate the integration of language models into chatbot apps.
 
 ## Features
 
