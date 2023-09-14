@@ -5,10 +5,6 @@
     <img src="https://img.shields.io/badge/Discord-Community-light?style=flat-square" />
 </a>
 
-<a href="[https://discord.gg/VYgCh2p3Ww](https://hub.docker.com/r/intellinode/intelliserver)" alt="licenses tag">
-    <img src="https://img.shields.io/docker/pulls/intellinode/intelliserver" />
-</a>
-
 </p>
 
 
