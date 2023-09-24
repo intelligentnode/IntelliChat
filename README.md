@@ -25,13 +25,11 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 - Manage the API Keys via UI.
 
 
-<img src="assets/intellichat-screenshot-v1.png" width="650em">
-
 ## Installing and Running the App
 
-1. Clone the repository
-2. Install the dependencies: `pnpm install` or `npm install` or `yarn install`
-3. Start the Next.js server `pnpm dev` or `npm run dev` or `yarn dev`
+1. `cd intellichat`.
+2. Install the dependencies: `pnpm install` or `npm install` or `yarn install`.
+3. Start the Next.js server `pnpm dev` or `npm run dev` or `yarn dev`.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
