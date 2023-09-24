@@ -19,7 +19,7 @@ IntelliChat is an open-source AI chatbot built with [IntelliNode](https://github
 - Manage the API Keys via UI.
 
 
-<img src="images/intellichat-screenshot-v1.png" width="650em">
+<img src="assets/intellichat-screenshot-v1.png" width="650em">
 
 ## Installing and Running the App
 
