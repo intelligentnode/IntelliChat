@@ -8,7 +8,13 @@
 </p>
 
 
-IntelliChat is an open-source AI chatbot built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and Next.js. It is designed to accelerate the integration of language models into chatbot apps.
+IntelliChat is an open-source AI chatbot built with [IntelliNode](https://github.com/intelligentnode/IntelliNode) and Next.js. It is designed to accelerate the integration of multiple language models into chatbot apps.
+
+
+
+https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f-9351-39185c659d84
+
+
 
 ## Features
 
@@ -19,7 +25,7 @@ IntelliChat is an open-source AI chatbot built with [IntelliNode](https://github
 - Manage the API Keys via UI.
 
 
-<img src="images/intellichat-screenshot-v1.png" width="650em">
+<img src="assets/intellichat-screenshot-v1.png" width="650em">
 
 ## Installing and Running the App
 
