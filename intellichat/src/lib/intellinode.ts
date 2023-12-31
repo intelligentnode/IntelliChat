@@ -159,22 +159,21 @@ function createProxy(resourceName: string) {
   return proxy;
 }
 
+type ContextResponseParams = {
+  apiKey: string;
+  proxy?: ProxyHelper | null;
+  messages: { role: 'user' | 'assistant'; content: string }[];
+  model?: string | null;
+  n?: number;
+};
+
 async function getContextResponse({
   apiKey,
   proxy = null,
   messages,
   model,
   n = 2,
-}: {
-  apiKey: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[];
-  proxy?: ProxyHelper | null;
-  model?: string | null;
-  n?: number;
-}) {
+}: ContextResponseParams) {
   const context = new ChatContext(apiKey, 'openai', proxy);
   // extract the last message from the array; this is the user's message
   const userMessage = messages[messages.length - 1].content;

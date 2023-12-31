@@ -34,23 +34,13 @@ export async function POST(req: Request) {
   const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
 
   if (!key) {
-    return NextResponse.json(
-      {
-        error:
-          'no api key provided, either add it to your .env file or in the chat settings',
-      },
-      { status: 400 }
-    );
+    const missingKeyError = `no api key provided for ${provider}, either add it to your .env file or in the chat settings`;
+    return NextResponse.json({ error: missingKeyError }, { status: 400 });
   }
 
   if (!contextKey) {
-    return NextResponse.json(
-      {
-        error:
-          'OpenAi key was not provided, either add it to your .env file or in the chat settings',
-      },
-      { status: 400 }
-    );
+    const missingContextKey = `OpenAi key was not provided, either add it to your .env file or in the chat settings`;
+    return NextResponse.json({ error: missingContextKey }, { status: 400 });
   }
 
   const chatSystemMessage =

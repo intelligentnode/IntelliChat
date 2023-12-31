@@ -18,6 +18,12 @@ export const replicateValidator = z.object({
   apiKey: z.string(),
 });
 
+export const cohereValidator = z.object({
+  name: z.literal('cohere'),
+  model: z.enum(['coral']),
+  apiKey: z.string(),
+});
+
 export const azureValidator = z.object({
   name: z.literal('azure'),
   model: z.string(),
@@ -38,6 +44,7 @@ export const chatbotValidator = z.object({
     openai: openAIValidator.optional(),
     replicate: replicateValidator.optional(),
     azure: azureValidator.optional(),
+    cohere: cohereValidator.optional(),
   }),
 
   systemMessage: z.string().optional(),
@@ -48,5 +55,6 @@ export const chatbotValidator = z.object({
 export type azureType = z.infer<typeof azureValidator>;
 export type openAIType = z.infer<typeof openAIValidator>;
 export type replicateType = z.infer<typeof replicateValidator>;
+export type cohereType = z.infer<typeof cohereValidator>;
 
 export type PostMessagePayload = z.infer<typeof chatbotValidator>;

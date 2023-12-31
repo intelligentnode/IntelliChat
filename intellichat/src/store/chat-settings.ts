@@ -1,8 +1,9 @@
-import { Azure, OpenAI, Replicate } from '@/lib/chat-providers';
-import { Message } from '@/lib/types';
-import {
+import type { Azure, Cohere, OpenAI, Replicate } from '@/lib/chat-providers';
+import type { Message } from '@/lib/types';
+import type {
   PostMessagePayload,
   azureType,
+  cohereType,
   openAIType,
   replicateType,
 } from '@/lib/validators';
@@ -18,23 +19,29 @@ type ChatSettingsState = {
   openai: openAIType;
   replicate: replicateType;
   azure: azureType;
+  cohere: cohereType;
   envKeyExist: {
     openai: boolean;
     replicate: boolean;
     azure: boolean;
+    cohere: boolean;
   };
   withContext: boolean;
+  intellinodeData: boolean;
+  oneKey: string;
   setEnvKeyExist: ({
     openai,
     replicate,
+    cohere,
   }: {
     openai: boolean;
     replicate: boolean;
+    cohere: boolean;
   }) => void;
   getModel: () => string;
   getExistsInEnv: () => boolean;
   getSettings: () => Omit<PostMessagePayload, 'messages'>;
-  getProvider: () => Azure | OpenAI | Replicate;
+  getProvider: () => Azure | OpenAI | Replicate | Cohere;
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
   setMessage: (message: Message) => void;
@@ -45,17 +52,24 @@ type ChatSettingsState = {
 export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
+      intellinodeData: false,
       withContext: true,
       systemMessage: '',
       provider: 'openai',
       numberOfMessages: 4,
       messages: [],
       isSidebarOpen: false,
+      oneKey: '',
       azure: {
         name: 'azure',
         model: '',
         resourceName: '',
         embeddingName: '',
+        apiKey: '',
+      },
+      cohere: {
+        name: 'cohere',
+        model: 'coral',
         apiKey: '',
       },
       openai: {
@@ -72,6 +86,7 @@ export const useChatSettings = create<ChatSettingsState>()(
         openai: false,
         replicate: false,
         azure: false,
+        cohere: false,
       },
       clearMessages: () => {
         set((state) => ({
@@ -91,6 +106,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           openai: { ...state.openai, apiKey: '' },
           replicate: { ...state.replicate, apiKey: '' },
           azure: { ...state.azure, apiKey: '' },
+          cohere: { ...state.cohere, apiKey: '' },
         }));
       },
       getExistsInEnv: () => {
@@ -105,6 +121,7 @@ export const useChatSettings = create<ChatSettingsState>()(
             openai: get().openai,
             replicate: get().replicate,
             azure: get().azure,
+            cohere: get().cohere,
           },
           systemMessage: get().systemMessage,
           n: get().numberOfMessages,
@@ -120,6 +137,8 @@ export const useChatSettings = create<ChatSettingsState>()(
           return get().replicate;
         } else if (provider === 'azure') {
           return get().azure;
+        } else if (provider === 'cohere') {
+          return get().cohere;
         } else {
           // return default provider
           console.log('returning default provider');
@@ -134,6 +153,8 @@ export const useChatSettings = create<ChatSettingsState>()(
           return get().replicate.model;
         } else if (provider === 'azure') {
           return get().azure.model;
+        } else if (provider === 'cohere') {
+          return get().cohere.model;
         } else {
           // return default model
           console.log('returning default model');
@@ -149,15 +170,18 @@ export const useChatSettings = create<ChatSettingsState>()(
       setEnvKeyExist: ({
         openai,
         replicate,
+        cohere,
       }: {
         openai: boolean;
         replicate: boolean;
+        cohere: boolean;
       }) => {
         set((state) => ({
           envKeyExist: {
             ...state.envKeyExist,
             openai,
             replicate,
+            cohere,
           },
         }));
       },

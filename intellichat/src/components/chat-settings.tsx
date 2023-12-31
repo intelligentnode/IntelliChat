@@ -38,15 +38,18 @@ const formSchema = z
   .object({
     systemMessage: z.string(),
     numberOfMessages: z.number().min(2).max(6),
-    providerName: z.enum(['openai', 'replicate', 'azure']),
+    providerName: z.enum(['openai', 'replicate', 'azure', 'cohere']),
     providerModel: z.string(),
     openaiKey: z.string(),
     replicateKey: z.string(),
+    cohereKey: z.string(),
     azureKey: z.string(),
     azureResourceName: z.string(),
     azureModelName: z.string(),
     azureEmbeddingName: z.string(),
     withContext: z.boolean(),
+    intellinodeData: z.boolean(),
+    oneKey: z.string().optional(),
     envKeyExist: z.object({
       openai: z.boolean(),
       replicate: z.boolean(),
@@ -84,48 +87,39 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const openai = useChatSettings((s) => s.openai);
   const replicate = useChatSettings((s) => s.replicate);
   const azure = useChatSettings((s) => s.azure);
+  const cohere = useChatSettings((s) => s.cohere);
   const withContext = useChatSettings((s) => s.withContext);
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
+  const intellinodeData = useChatSettings((s) => s.intellinodeData);
+  const oneKey = useChatSettings((s) => s.oneKey);
   const getModel = useChatSettings((s) => s.getModel);
   const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
   const resetKeys = useChatSettings((s) => s.resetKeys);
   const hasKey = openai.apiKey || replicate.apiKey || azure.apiKey;
 
+  const values = {
+    systemMessage,
+    numberOfMessages,
+    providerName: provider,
+    providerModel: getModel(),
+    openaiKey: openai.apiKey,
+    replicateKey: replicate.apiKey,
+    azureKey: azure.apiKey,
+    cohereKey: cohere.apiKey,
+    azureResourceName: azure.resourceName,
+    azureModelName: azure.model,
+    azureEmbeddingName: azure.embeddingName,
+    withContext,
+    intellinodeData,
+    oneKey,
+    envKeyExist: {
+      openai: envKeyExist.openai,
+      replicate: envKeyExist.replicate,
+    },
+  };
   const form = useForm<z.infer<typeof formSchema>>({
-    values: {
-      systemMessage,
-      numberOfMessages,
-      providerName: provider,
-      providerModel: getModel(),
-      openaiKey: openai.apiKey,
-      replicateKey: replicate.apiKey,
-      azureKey: azure.apiKey,
-      azureResourceName: azure.resourceName,
-      azureModelName: azure.model,
-      azureEmbeddingName: azure.embeddingName,
-      withContext,
-      envKeyExist: {
-        openai: envKeyExist.openai,
-        replicate: envKeyExist.replicate,
-      },
-    },
-    defaultValues: {
-      systemMessage,
-      numberOfMessages,
-      providerName: provider,
-      providerModel: getModel(),
-      openaiKey: openai.apiKey,
-      replicateKey: replicate.apiKey,
-      azureKey: azure.apiKey,
-      azureResourceName: azure.resourceName,
-      azureModelName: azure.model,
-      azureEmbeddingName: azure.embeddingName,
-      withContext,
-      envKeyExist: {
-        openai: envKeyExist.openai,
-        replicate: envKeyExist.replicate,
-      },
-    },
+    values,
+    defaultValues: values,
     resolver: zodResolver(formSchema),
   });
 
@@ -135,6 +129,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     providerModel,
     openaiKey,
     replicateKey,
+    cohereKey,
     azureEmbeddingName,
     azureResourceName,
     azureModelName,
@@ -167,13 +162,17 @@ export default function ChatSettings({ close }: { close: () => void }) {
         model: azureModelName,
         embeddingName: azureEmbeddingName,
       },
+      cohere: {
+        ...cohere,
+        apiKey: cohereKey,
+      },
       ...values,
     });
     close();
   }
 
   function onChangeProviderName(name: string) {
-    const providerName = name as 'openai' | 'replicate' | 'azure';
+    const providerName = name as 'openai' | 'replicate' | 'azure' | 'cohere';
     form.setValue('providerName', providerName);
 
     if (providerName !== 'azure') {
@@ -191,6 +190,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   }
 
   const watchProviderName = form.watch('providerName');
+  const watchIntellinodeData = form.watch('intellinodeData');
 
   return (
     <ScrollArea className='h-full'>
@@ -379,6 +379,14 @@ export default function ChatSettings({ close }: { close: () => void }) {
               />
               <ApiKeyInput
                 control={form.control}
+                id='cohere'
+                name='cohereKey'
+                label='Cohere API Key'
+                provider={form.watch('providerName') as keyof AIProviderType}
+                withContext={form.watch('withContext')}
+              />
+              <ApiKeyInput
+                control={form.control}
                 id='openai'
                 name='openaiKey'
                 label='OpenAI API Key'
@@ -402,7 +410,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
                   </FormControl>
                 </div>
                 <FieldTooltip>
-                  {`When enabled, the chatbot wil dynamically select previous
+                  {`When enabled, the chatbot will dynamically select previous
                   parts of the conversation that are most relevant to the
                   current query, using embeddings. The number of parts will be
                   equal to the number of messages set above.`}
@@ -410,6 +418,44 @@ export default function ChatSettings({ close }: { close: () => void }) {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name='intellinodeData'
+            render={({ field }) => (
+              <FormItem className='flex items-center justify-between gap-2 space-y-0'>
+                <div className='flex items-center gap-2'>
+                  <FormLabel>intelliNode Data</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </div>
+                <FieldTooltip>
+                  {`When enabled, you can use the chatbot against your project's data.`}
+                </FieldTooltip>
+              </FormItem>
+            )}
+          />
+          {watchIntellinodeData && (
+            <FormField
+              control={form.control}
+              name={'oneKey'}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>One Key</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type='password'
+                      autoComplete={`cohere-apiKey`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
           <div className='flex justify-between'>
             <Button type='submit'>Save</Button>
             <Button
