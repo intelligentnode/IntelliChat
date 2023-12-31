@@ -2,6 +2,7 @@ import {
   ChatContext,
   ChatGPTInput,
   Chatbot,
+  CohereInput,
   LLamaReplicateInput,
   ProxyHelper,
 } from 'intellinode';
@@ -9,6 +10,8 @@ import { ChatProvider } from './types';
 import {
   azureType,
   azureValidator,
+  cohereType,
+  cohereValidator,
   openAIType,
   openAIValidator,
   replicateType,
@@ -22,6 +25,8 @@ export function getChatProviderKey(provider: ChatProvider) {
     return process.env.REPLICATE_API_KEY;
   } else if (provider === 'azure') {
     return process.env.AZURE_API_KEY;
+  } else if (provider === 'cohere') {
+    return process.env.COHERE_API_KEY;
   } else {
     throw new Error('provider is not supported');
   }
@@ -79,10 +84,22 @@ type getChatResponseParams = {
     role: 'user' | 'assistant';
     content: string;
   }[];
-  provider?: openAIType | replicateType;
+  provider?: openAIType | replicateType | cohereType;
   withContext: boolean;
   n: number;
   contextKey: string;
+};
+
+const validateProvider = (name: string) => {
+  if (name === 'openai') {
+    return openAIValidator;
+  } else if (name === 'replicate') {
+    return replicateValidator;
+  } else if (name === 'cohere') {
+    return cohereValidator;
+  } else {
+    throw new Error('provider is not supported');
+  }
 };
 
 export async function getChatResponse({
@@ -96,10 +113,7 @@ export async function getChatResponse({
   if (!provider) {
     throw new Error('provider is required');
   }
-  const parsed =
-    provider.name === 'openai'
-      ? openAIValidator.safeParse(provider)
-      : replicateValidator.safeParse(provider);
+  const parsed = validateProvider(provider.name).safeParse(provider);
 
   if (!parsed.success) {
     const { error } = parsed;
@@ -132,13 +146,15 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new ChatGPTInput(systemMessage, { model });
     case 'replicate':
       return new LLamaReplicateInput(systemMessage, { model });
+    case 'cohere':
+      return new CohereInput(systemMessage, { model });
     default:
       throw new Error('provider is not supported');
   }
 }
 
 function addMessages(
-  chatInput: ChatGPTInput | LLamaReplicateInput,
+  chatInput: ChatGPTInput | LLamaReplicateInput | CohereInput,
   messages: {
     role: 'user' | 'assistant';
     content: string;

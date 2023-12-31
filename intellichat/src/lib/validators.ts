@@ -39,7 +39,7 @@ export const chatbotValidator = z.object({
       role: z.enum(['user', 'assistant']),
     })
   ),
-  provider: z.enum(['openai', 'replicate', 'azure']),
+  provider: z.enum(['openai', 'replicate', 'azure', 'cohere']),
   providers: z.object({
     openai: openAIValidator.optional(),
     replicate: replicateValidator.optional(),

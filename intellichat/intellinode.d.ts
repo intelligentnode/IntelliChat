@@ -32,8 +32,16 @@ declare module 'intellinode' {
   class ChatGPTMessage {
     constructor(message: string, role: string);
   }
+
   class LLamaReplicateInput {
     constructor(message: string, options?: { model?: string });
+
+    addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
+  }
+
+  class CohereInput {
+    constructor(message: string, options?: { model?: string; web?: boolean });
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
