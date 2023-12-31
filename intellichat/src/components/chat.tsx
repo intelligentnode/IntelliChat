@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use } from 'react';
+import React from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
@@ -18,7 +18,7 @@ export default function Chat() {
   const messages = useChatSettings((s) => s.messages);
   const setMessage = useChatSettings((s) => s.setMessage);
   const setOneKey = useChatSettings((s) => s.setOneKey);
-
+  const settings = getSettings();
   const params = useSearchParams();
   const oneKey = params.get('one_key');
   setOneKey(oneKey);
@@ -29,24 +29,15 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
-      const {
-        n,
-        provider,
-        providers,
-        systemMessage,
-        withContext,
-        intellinodeData,
-        oneKey,
-      } = getSettings();
       const payload: PostMessagePayload = {
         messages,
-        provider,
-        providers,
-        systemMessage,
-        withContext,
-        intellinodeData,
-        oneKey,
-        n,
+        provider: settings.provider,
+        providers: settings.providers,
+        systemMessage: settings.systemMessage,
+        withContext: settings.withContext,
+        intellinodeData: settings.intellinodeData,
+        oneKey: settings.oneKey,
+        n: settings.n,
       };
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -110,7 +101,6 @@ export default function Chat() {
       content: inputText,
       role: 'user',
     } as Message;
-
     setMessage(prompt);
     mutate(messages ? [...messages, prompt] : [prompt]);
     input.current!.value = '';

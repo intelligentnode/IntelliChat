@@ -41,6 +41,7 @@ type getAzureChatResponseParams = {
   provider?: azureType;
   withContext: boolean;
   n: number;
+  oneKey?: string;
 };
 
 export async function getAzureChatResponse({
@@ -48,6 +49,7 @@ export async function getAzureChatResponse({
   messages,
   provider,
   withContext,
+  oneKey,
   n,
 }: getAzureChatResponseParams) {
   const parsed = azureValidator.safeParse(provider);
@@ -59,7 +61,13 @@ export async function getAzureChatResponse({
 
   const { apiKey, resourceName, model, embeddingName, name } = parsed.data;
   const proxy = createProxy(resourceName);
-  const chatbot = new Chatbot(apiKey, 'openai', proxy);
+
+  const chatbot = new Chatbot(
+    apiKey,
+    'openai',
+    proxy,
+    ...(oneKey ? [oneKey] : [])
+  );
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
@@ -68,6 +76,7 @@ export async function getAzureChatResponse({
       proxy,
       messages,
       model: embeddingName,
+      n,
     });
     addMessages(input, contextResponse);
   } else {

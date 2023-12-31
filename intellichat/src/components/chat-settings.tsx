@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Azure, OpenAI, Replicate } from '@/lib/chat-providers';
+import { Azure, Cohere, OpenAI, Replicate } from '@/lib/chat-providers';
 
 import { useChatSettings } from '@/store/chat-settings';
 import { AIProviderType, AIProviders } from '@/lib/chat-providers';
@@ -147,6 +147,14 @@ export default function ChatSettings({ close }: { close: () => void }) {
             ? (providerModel as OpenAI['model'])
             : openai.model,
       },
+      cohere: {
+        ...cohere,
+        apiKey: replicateKey,
+        model:
+          provider === 'cohere'
+            ? (providerModel as Cohere['model'])
+            : cohere.model,
+      },
       replicate: {
         ...replicate,
         apiKey: replicateKey,
@@ -162,10 +170,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
         model: azureModelName,
         embeddingName: azureEmbeddingName,
       },
-      cohere: {
-        ...cohere,
-        apiKey: cohereKey,
-      },
+
       ...values,
     });
     close();

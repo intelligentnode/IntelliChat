@@ -12,7 +12,6 @@ const defaultProvider = 'openai';
 
 export async function POST(req: Request) {
   const json = await req.json();
-
   const parsedJson = chatbotValidator.safeParse(json);
 
   if (!parsedJson.success) {

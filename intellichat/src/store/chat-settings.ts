@@ -14,7 +14,7 @@ type ChatSettingsState = {
   messages: Message[];
   isSidebarOpen: boolean;
   systemMessage: string;
-  provider: 'openai' | 'replicate' | 'azure';
+  provider: 'openai' | 'replicate' | 'azure' | 'cohere';
   numberOfMessages: number;
   openai: openAIType;
   replicate: replicateType;
