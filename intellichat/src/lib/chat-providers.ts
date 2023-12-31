@@ -6,13 +6,16 @@ export const replicateModels = [
   '34b-python',
   '13b-code-instruct',
 ] as const;
+export const cohereModels = ['coral'] as const;
 
 export const AIProviders: {
   openai: { name: 'openai'; models: typeof openAIModels };
   replicate: { name: 'replicate'; models: typeof replicateModels };
+  cohere: { name: 'cohere'; models: typeof cohereModels };
 } = {
   openai: { name: 'openai', models: openAIModels },
   replicate: { name: 'replicate', models: replicateModels },
+  cohere: { name: 'cohere', models: cohereModels },
 };
 
 export const defaultProvider = {
@@ -39,5 +42,11 @@ export type Azure = {
   model: string;
   resourceName: string;
   embeddingName: string;
+  apiKey: string;
+};
+
+export type Cohere = {
+  name: 'cohere';
+  model: AIProviderType['cohere']['models'][number];
   apiKey: string;
 };

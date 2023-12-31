@@ -10,12 +10,18 @@ import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
 import { useChatSettings } from '@/store/chat-settings';
 import { useToast } from './ui/use-toast';
+import { useSearchParams } from 'next/navigation';
 
 export default function Chat() {
   const getSettings = useChatSettings((s) => s.getSettings);
   const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
   const messages = useChatSettings((s) => s.messages);
   const setMessage = useChatSettings((s) => s.setMessage);
+  const setOneKey = useChatSettings((s) => s.setOneKey);
+  const settings = getSettings();
+  const params = useSearchParams();
+  const oneKey = params.get('one_key');
+  setOneKey(oneKey);
 
   const { toast } = useToast();
 
@@ -23,15 +29,15 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
-      const { n, provider, providers, systemMessage, withContext } =
-        getSettings();
       const payload: PostMessagePayload = {
         messages,
-        provider,
-        providers,
-        systemMessage,
-        withContext,
-        n,
+        provider: settings.provider,
+        providers: settings.providers,
+        systemMessage: settings.systemMessage,
+        withContext: settings.withContext,
+        intellinodeData: settings.intellinodeData,
+        oneKey: settings.oneKey,
+        n: settings.n,
       };
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -64,7 +70,7 @@ export default function Chat() {
   });
 
   // check if api keys are set as env variables
-  const envKeysQuery = useQuery({
+  useQuery({
     queryKey: ['apiKeys'],
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -75,6 +81,7 @@ export default function Chat() {
         return json as {
           openai: boolean;
           replicate: boolean;
+          cohere: boolean;
         };
       }
       const { error } = await res.json();
@@ -94,7 +101,6 @@ export default function Chat() {
       content: inputText,
       role: 'user',
     } as Message;
-
     setMessage(prompt);
     mutate(messages ? [...messages, prompt] : [prompt]);
     input.current!.value = '';

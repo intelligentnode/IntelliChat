@@ -2,6 +2,7 @@ import {
   ChatContext,
   ChatGPTInput,
   Chatbot,
+  CohereInput,
   LLamaReplicateInput,
   ProxyHelper,
 } from 'intellinode';
@@ -9,6 +10,8 @@ import { ChatProvider } from './types';
 import {
   azureType,
   azureValidator,
+  cohereType,
+  cohereValidator,
   openAIType,
   openAIValidator,
   replicateType,
@@ -22,6 +25,8 @@ export function getChatProviderKey(provider: ChatProvider) {
     return process.env.REPLICATE_API_KEY;
   } else if (provider === 'azure') {
     return process.env.AZURE_API_KEY;
+  } else if (provider === 'cohere') {
+    return process.env.COHERE_API_KEY;
   } else {
     throw new Error('provider is not supported');
   }
@@ -36,6 +41,7 @@ type getAzureChatResponseParams = {
   provider?: azureType;
   withContext: boolean;
   n: number;
+  oneKey?: string;
 };
 
 export async function getAzureChatResponse({
@@ -43,6 +49,7 @@ export async function getAzureChatResponse({
   messages,
   provider,
   withContext,
+  oneKey,
   n,
 }: getAzureChatResponseParams) {
   const parsed = azureValidator.safeParse(provider);
@@ -54,7 +61,13 @@ export async function getAzureChatResponse({
 
   const { apiKey, resourceName, model, embeddingName, name } = parsed.data;
   const proxy = createProxy(resourceName);
-  const chatbot = new Chatbot(apiKey, 'openai', proxy);
+
+  const chatbot = new Chatbot(
+    apiKey,
+    'openai',
+    proxy,
+    ...(oneKey ? [oneKey] : [])
+  );
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
@@ -63,6 +76,7 @@ export async function getAzureChatResponse({
       proxy,
       messages,
       model: embeddingName,
+      n,
     });
     addMessages(input, contextResponse);
   } else {
@@ -79,10 +93,23 @@ type getChatResponseParams = {
     role: 'user' | 'assistant';
     content: string;
   }[];
-  provider?: openAIType | replicateType;
+  provider?: openAIType | replicateType | cohereType;
   withContext: boolean;
   n: number;
   contextKey: string;
+  oneKey?: string;
+};
+
+const validateProvider = (name: string) => {
+  if (name === 'openai') {
+    return openAIValidator;
+  } else if (name === 'replicate') {
+    return replicateValidator;
+  } else if (name === 'cohere') {
+    return cohereValidator;
+  } else {
+    throw new Error('provider is not supported');
+  }
 };
 
 export async function getChatResponse({
@@ -92,14 +119,12 @@ export async function getChatResponse({
   withContext,
   n,
   contextKey,
+  oneKey,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
   }
-  const parsed =
-    provider.name === 'openai'
-      ? openAIValidator.safeParse(provider)
-      : replicateValidator.safeParse(provider);
+  const parsed = validateProvider(provider.name).safeParse(provider);
 
   if (!parsed.success) {
     const { error } = parsed;
@@ -108,7 +133,7 @@ export async function getChatResponse({
 
   const { apiKey, model, name } = parsed.data;
 
-  const chatbot = new Chatbot(apiKey, name);
+  const chatbot = new Chatbot(apiKey, name, null, ...(oneKey ? [oneKey] : []));
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
@@ -132,13 +157,15 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new ChatGPTInput(systemMessage, { model });
     case 'replicate':
       return new LLamaReplicateInput(systemMessage, { model });
+    case 'cohere':
+      return new CohereInput(systemMessage, { model });
     default:
       throw new Error('provider is not supported');
   }
 }
 
 function addMessages(
-  chatInput: ChatGPTInput | LLamaReplicateInput,
+  chatInput: ChatGPTInput | LLamaReplicateInput | CohereInput,
   messages: {
     role: 'user' | 'assistant';
     content: string;
@@ -159,22 +186,21 @@ function createProxy(resourceName: string) {
   return proxy;
 }
 
+type ContextResponseParams = {
+  apiKey: string;
+  proxy?: ProxyHelper | null;
+  messages: { role: 'user' | 'assistant'; content: string }[];
+  model?: string | null;
+  n?: number;
+};
+
 async function getContextResponse({
   apiKey,
   proxy = null,
   messages,
   model,
   n = 2,
-}: {
-  apiKey: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[];
-  proxy?: ProxyHelper | null;
-  model?: string | null;
-  n?: number;
-}) {
+}: ContextResponseParams) {
   const context = new ChatContext(apiKey, 'openai', proxy);
   // extract the last message from the array; this is the user's message
   const userMessage = messages[messages.length - 1].content;

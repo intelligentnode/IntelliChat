@@ -12,7 +12,6 @@ const defaultProvider = 'openai';
 
 export async function POST(req: Request) {
   const json = await req.json();
-
   const parsedJson = chatbotValidator.safeParse(json);
 
   if (!parsedJson.success) {
@@ -27,6 +26,8 @@ export async function POST(req: Request) {
     systemMessage = defaultSystemMessage,
     n = 2,
     withContext,
+    intellinodeData,
+    oneKey,
   } = parsedJson.data;
 
   const key =
@@ -34,23 +35,18 @@ export async function POST(req: Request) {
   const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
 
   if (!key) {
-    return NextResponse.json(
-      {
-        error:
-          'no api key provided, either add it to your .env file or in the chat settings',
-      },
-      { status: 400 }
-    );
+    const missingKeyError = `no api key provided for ${provider}, either add it to your .env file or in the chat settings`;
+    return NextResponse.json({ error: missingKeyError }, { status: 400 });
   }
 
   if (!contextKey) {
-    return NextResponse.json(
-      {
-        error:
-          'OpenAi key was not provided, either add it to your .env file or in the chat settings',
-      },
-      { status: 400 }
-    );
+    const missingContextKey = `OpenAi key was not provided, either add it to your .env file or in the chat settings`;
+    return NextResponse.json({ error: missingContextKey }, { status: 400 });
+  }
+
+  if (intellinodeData && !oneKey) {
+    const missingOneKey = `oneKey is required when intellinodeData is enabled`;
+    return NextResponse.json({ error: missingOneKey }, { status: 400 });
   }
 
   const chatSystemMessage =
@@ -65,6 +61,7 @@ export async function POST(req: Request) {
         withContext,
         messages,
         n,
+        oneKey,
       });
       return NextResponse.json({ response: responses });
     } else if (providers[provider] && providers[provider].name !== 'azure') {
@@ -75,6 +72,7 @@ export async function POST(req: Request) {
         contextKey,
         messages,
         n,
+        oneKey,
       });
       return NextResponse.json({ response: responses });
     }
