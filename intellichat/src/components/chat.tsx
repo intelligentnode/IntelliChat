@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { use } from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
@@ -10,12 +10,18 @@ import type { PostMessagePayload } from '@/lib/validators';
 import { Message } from '@/lib/types';
 import { useChatSettings } from '@/store/chat-settings';
 import { useToast } from './ui/use-toast';
+import { useSearchParams } from 'next/navigation';
 
 export default function Chat() {
   const getSettings = useChatSettings((s) => s.getSettings);
   const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
   const messages = useChatSettings((s) => s.messages);
   const setMessage = useChatSettings((s) => s.setMessage);
+  const setOneKey = useChatSettings((s) => s.setOneKey);
+
+  const params = useSearchParams();
+  const oneKey = params.get('one_key');
+  setOneKey(oneKey);
 
   const { toast } = useToast();
 
@@ -64,7 +70,7 @@ export default function Chat() {
   });
 
   // check if api keys are set as env variables
-  const envKeysQuery = useQuery({
+  useQuery({
     queryKey: ['apiKeys'],
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -75,6 +81,7 @@ export default function Chat() {
         return json as {
           openai: boolean;
           replicate: boolean;
+          cohere: boolean;
         };
       }
       const { error } = await res.json();

@@ -45,6 +45,7 @@ type ChatSettingsState = {
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
   setMessage: (message: Message) => void;
+  setOneKey: (key: string | null) => void;
   clearMessages: () => void;
   resetKeys: () => void;
 };
@@ -53,13 +54,20 @@ export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
       intellinodeData: false,
+      oneKey: '',
+      setOneKey: (key: string | null) => {
+        set((state) => ({
+          ...state,
+          oneKey: key ?? '',
+          intellinodeData: key !== null,
+        }));
+      },
       withContext: true,
       systemMessage: '',
       provider: 'openai',
       numberOfMessages: 4,
       messages: [],
       isSidebarOpen: false,
-      oneKey: '',
       azure: {
         name: 'azure',
         model: '',
@@ -185,6 +193,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           },
         }));
       },
+
       toggleSidebar: () => {
         set((state) => ({
           isSidebarOpen: !state.isSidebarOpen,
@@ -194,7 +203,12 @@ export const useChatSettings = create<ChatSettingsState>()(
     {
       partialize: (state) =>
         Object.fromEntries(
-          Object.entries(state).filter(([key]) => !['messages'].includes(key))
+          Object.entries(state).filter(
+            ([key]) =>
+              !['messages', 'oneKey', 'intellinodeData', 'setOneKey'].includes(
+                key
+              )
+          )
         ),
       name: 'chat-settings',
     }
