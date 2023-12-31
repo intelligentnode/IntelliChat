@@ -49,6 +49,8 @@ export const chatbotValidator = z.object({
 
   systemMessage: z.string().optional(),
   withContext: z.boolean(),
+  intellinodeData: z.boolean(),
+  oneKey: z.string().optional(),
   n: z.number().optional(),
 });
 

@@ -5,10 +5,12 @@ declare module 'intellinode' {
     constructor(
       keyValue?: string,
       provider?: string,
-      customProxy?: ProxyHelper
+      customProxy?: ProxyHelper | null,
+      onekey?: string
     );
-    chat(modelInput?: ChatGPTInput | LLamaReplicateInput);
+    chat(modelInput?: ChatGPTInput | LLamaReplicateInput | CohereInput);
   }
+
   class ChatGPTInput {
     model: string = 'gpt-3.5-turbo';
     temperature: number = 1;

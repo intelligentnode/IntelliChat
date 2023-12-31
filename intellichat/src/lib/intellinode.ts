@@ -88,6 +88,7 @@ type getChatResponseParams = {
   withContext: boolean;
   n: number;
   contextKey: string;
+  oneKey?: string;
 };
 
 const validateProvider = (name: string) => {
@@ -109,6 +110,7 @@ export async function getChatResponse({
   withContext,
   n,
   contextKey,
+  oneKey,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
@@ -122,7 +124,7 @@ export async function getChatResponse({
 
   const { apiKey, model, name } = parsed.data;
 
-  const chatbot = new Chatbot(apiKey, name);
+  const chatbot = new Chatbot(apiKey, name, null, ...(oneKey ? [oneKey] : []));
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {

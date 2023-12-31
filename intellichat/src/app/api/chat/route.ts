@@ -27,6 +27,8 @@ export async function POST(req: Request) {
     systemMessage = defaultSystemMessage,
     n = 2,
     withContext,
+    intellinodeData,
+    oneKey,
   } = parsedJson.data;
 
   const key =
@@ -43,6 +45,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: missingContextKey }, { status: 400 });
   }
 
+  if (intellinodeData && !oneKey) {
+    const missingOneKey = `oneKey is required when intellinodeData is enabled`;
+    return NextResponse.json({ error: missingOneKey }, { status: 400 });
+  }
+
   const chatSystemMessage =
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
   const chatProvider = provider || defaultProvider;
@@ -55,6 +62,7 @@ export async function POST(req: Request) {
         withContext,
         messages,
         n,
+        oneKey,
       });
       return NextResponse.json({ response: responses });
     } else if (providers[provider] && providers[provider].name !== 'azure') {
@@ -65,6 +73,7 @@ export async function POST(req: Request) {
         contextKey,
         messages,
         n,
+        oneKey,
       });
       return NextResponse.json({ response: responses });
     }

@@ -29,14 +29,23 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
-      const { n, provider, providers, systemMessage, withContext } =
-        getSettings();
+      const {
+        n,
+        provider,
+        providers,
+        systemMessage,
+        withContext,
+        intellinodeData,
+        oneKey,
+      } = getSettings();
       const payload: PostMessagePayload = {
         messages,
         provider,
         providers,
         systemMessage,
         withContext,
+        intellinodeData,
+        oneKey,
         n,
       };
       const res = await fetch('/api/chat', {

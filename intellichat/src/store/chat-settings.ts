@@ -134,6 +134,8 @@ export const useChatSettings = create<ChatSettingsState>()(
           systemMessage: get().systemMessage,
           n: get().numberOfMessages,
           withContext: get().withContext,
+          oneKey: get().oneKey,
+          intellinodeData: get().intellinodeData,
         };
         return settings;
       },
