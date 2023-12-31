@@ -133,7 +133,12 @@ export async function getChatResponse({
 
   const { apiKey, model, name } = parsed.data;
 
-  const chatbot = new Chatbot(apiKey, name, null, ...(oneKey ? [oneKey] : []));
+  const chatbot = new Chatbot(
+    apiKey,
+    name,
+    null,
+    ...(oneKey ? [{ oneKey }] : [])
+  );
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {

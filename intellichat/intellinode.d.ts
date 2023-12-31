@@ -6,7 +6,9 @@ declare module 'intellinode' {
       keyValue?: string,
       provider?: string,
       customProxy?: ProxyHelper | null,
-      onekey?: string
+      options?: {
+        oneKey?: string;
+      }
     );
     chat(modelInput?: ChatGPTInput | LLamaReplicateInput | CohereInput);
   }
