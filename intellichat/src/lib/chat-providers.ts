@@ -6,7 +6,7 @@ export const replicateModels = [
   '34b-python',
   '13b-code-instruct',
 ] as const;
-export const cohereModels = ['coral'] as const;
+export const cohereModels = ['command'] as const;
 
 export const AIProviders: {
   openai: { name: 'openai'; models: typeof openAIModels };

@@ -20,7 +20,7 @@ export const replicateValidator = z.object({
 
 export const cohereValidator = z.object({
   name: z.literal('cohere'),
-  model: z.enum(['coral']),
+  model: z.enum(['command']),
   apiKey: z.string(),
 });
 

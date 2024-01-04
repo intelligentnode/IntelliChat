@@ -77,7 +77,7 @@ export const useChatSettings = create<ChatSettingsState>()(
       },
       cohere: {
         name: 'cohere',
-        model: 'coral',
+        model: 'command',
         apiKey: '',
       },
       openai: {
