@@ -149,7 +149,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
       },
       cohere: {
         ...cohere,
-        apiKey: replicateKey,
+        apiKey: cohereKey,
         model:
           provider === 'cohere'
             ? (providerModel as Cohere['model'])
