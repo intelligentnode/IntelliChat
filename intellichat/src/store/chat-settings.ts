@@ -73,7 +73,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           intellinodeData: key !== null,
         }));
       },
-      withContext: true,
+      withContext: false,
       systemMessage: '',
       provider: 'openai',
       numberOfMessages: 4,

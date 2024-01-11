@@ -70,7 +70,30 @@ export default function ChatSettings({ close }: { close: () => void }) {
     },
   };
   const form = useForm<z.infer<typeof formSchema>>({
-    values,
+    values: {
+      systemMessage,
+      numberOfMessages,
+      providerName: provider,
+      providerModel: getModel(),
+      openaiKey: openai.apiKey,
+      replicateKey: replicate.apiKey,
+      azureKey: azure.apiKey,
+      cohereKey: cohere.apiKey,
+      googleKey: google.apiKey,
+      azureResourceName: azure.resourceName,
+      azureModelName: azure.model,
+      azureEmbeddingName: azure.embeddingName,
+      withContext,
+      intellinodeData,
+      oneKey,
+      envKeyExist: {
+        openai: envKeyExist.openai,
+        replicate: envKeyExist.replicate,
+        azure: envKeyExist.azure,
+        cohere: envKeyExist.cohere,
+        google: envKeyExist.google,
+      },
+    },
     defaultValues: values,
     resolver: zodResolver(formSchema),
   });
@@ -166,6 +189,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
           _key: model,
         }));
 
+  console.log(form.formState.errors);
   return (
     <ScrollArea className='h-full'>
       <Form {...form}>

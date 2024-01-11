@@ -5,9 +5,15 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const OpenAIKey = getChatProviderKey('openai');
   const ReplicateKey = getChatProviderKey('replicate');
+  const CohereKey = getChatProviderKey('cohere');
+  const GoogleKey = getChatProviderKey('google');
+  const AzureKey = getChatProviderKey('azure');
 
   return NextResponse.json({
     openai: !!OpenAIKey,
     replicate: !!ReplicateKey,
+    cohere: !!CohereKey,
+    google: !!GoogleKey,
+    azure: !!AzureKey,
   });
 }

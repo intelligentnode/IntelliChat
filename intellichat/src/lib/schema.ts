@@ -18,31 +18,30 @@ export const formSchema = z
     intellinodeData: z.boolean(),
     oneKey: z.string().optional(),
     envKeyExist: z.object({
-      openai: z.boolean(),
-      replicate: z.boolean(),
+      openai: z.boolean().optional(),
+      replicate: z.boolean().optional(),
+      azure: z.boolean().optional(),
+      google: z.boolean().optional(),
+      cohere: z.boolean().optional(),
     }),
   })
   .superRefine((data, ctx) => {
-    if (
-      (data.providerModel === 'openai' || data.withContext) &&
-      !data.envKeyExist.openai &&
-      !data.openaiKey
-    ) {
+    const name = data.providerName;
+    const keyValue = data[`${name}Key`];
+    const keyExists = keyValue !== '' || data.envKeyExist[name];
+    if (!keyExists) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${name} API Key is required`,
+        path: [`${name}Key`],
+      });
+    }
+
+    if (data.withContext && !data.envKeyExist.openai && !data.openaiKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'OpenAI API Key is required.',
         path: ['openaiKey'],
-      });
-    }
-    if (
-      data.providerModel === 'replicate' &&
-      !data.envKeyExist.replicate &&
-      !data.replicateKey
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Replicate API Key is required.',
-        path: ['replicateKey'],
       });
     }
   });
