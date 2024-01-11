@@ -19,13 +19,12 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 ## Features
 
 - Select your preferred AI Provider and model from the UI.
-  - **OpenAI**: gpt-4, gpt-3.5-turbo.
+  - **OpenAI ChatGPT**: gpt-4, gpt-3.5-turbo.
   - **Google Gemini**.
-  - **Replicate**: Llama (70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct).
   - **Azure Openai**.
-
   - **Cohere Coral**.
-- Manage the API Keys via UI.
+  - **Replicate**: Llama (70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct).
+- Manage your API keys via the UI.
 - Access your data using intellinode one key.
 
 
