@@ -8,7 +8,7 @@ export default function FieldTooltip({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger type='button'>
         <InfoIcon width={20} />
         <TooltipContent align={'end'} className='max-w-xs text-left'>
           <p className='text-sm'>{children}</p>

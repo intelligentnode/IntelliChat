@@ -7,15 +7,18 @@ export const replicateModels = [
   '13b-code-instruct',
 ] as const;
 export const cohereModels = ['command'] as const;
+export const googleModels = ['gemini'] as const;
 
 export const AIProviders: {
   openai: { name: 'openai'; models: typeof openAIModels };
   replicate: { name: 'replicate'; models: typeof replicateModels };
   cohere: { name: 'cohere'; models: typeof cohereModels };
+  google: { name: 'google'; models: typeof googleModels };
 } = {
   openai: { name: 'openai', models: openAIModels },
   replicate: { name: 'replicate', models: replicateModels },
   cohere: { name: 'cohere', models: cohereModels },
+  google: { name: 'google', models: googleModels },
 };
 
 export const defaultProvider = {
@@ -48,5 +51,11 @@ export type Azure = {
 export type Cohere = {
   name: 'cohere';
   model: AIProviderType['cohere']['models'][number];
+  apiKey: string;
+};
+
+export type Google = {
+  name: 'google';
+  model: AIProviderType['google']['models'][number];
   apiKey: string;
 };

@@ -1,9 +1,16 @@
-import type { Azure, Cohere, OpenAI, Replicate } from '@/lib/chat-providers';
+import type {
+  Azure,
+  Cohere,
+  Google,
+  OpenAI,
+  Replicate,
+} from '@/lib/chat-providers';
 import type { Message } from '@/lib/types';
 import type {
   PostMessagePayload,
   azureType,
   cohereType,
+  googleType,
   openAIType,
   replicateType,
 } from '@/lib/validators';
@@ -14,17 +21,19 @@ type ChatSettingsState = {
   messages: Message[];
   isSidebarOpen: boolean;
   systemMessage: string;
-  provider: 'openai' | 'replicate' | 'azure' | 'cohere';
+  provider: 'openai' | 'replicate' | 'azure' | 'cohere' | 'google';
   numberOfMessages: number;
   openai: openAIType;
   replicate: replicateType;
   azure: azureType;
   cohere: cohereType;
+  google: googleType;
   envKeyExist: {
     openai: boolean;
     replicate: boolean;
     azure: boolean;
     cohere: boolean;
+    google: boolean;
   };
   withContext: boolean;
   intellinodeData: boolean;
@@ -33,15 +42,17 @@ type ChatSettingsState = {
     openai,
     replicate,
     cohere,
+    google,
   }: {
     openai: boolean;
     replicate: boolean;
     cohere: boolean;
+    google: boolean;
   }) => void;
   getModel: () => string;
   getExistsInEnv: () => boolean;
   getSettings: () => Omit<PostMessagePayload, 'messages'>;
-  getProvider: () => Azure | OpenAI | Replicate | Cohere;
+  getProvider: () => Azure | OpenAI | Replicate | Cohere | Google;
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
   setMessage: (message: Message) => void;
@@ -62,7 +73,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           intellinodeData: key !== null,
         }));
       },
-      withContext: true,
+      withContext: false,
       systemMessage: '',
       provider: 'openai',
       numberOfMessages: 4,
@@ -75,26 +86,16 @@ export const useChatSettings = create<ChatSettingsState>()(
         embeddingName: '',
         apiKey: '',
       },
-      cohere: {
-        name: 'cohere',
-        model: 'command',
-        apiKey: '',
-      },
-      openai: {
-        name: 'openai',
-        model: 'gpt-3.5-turbo',
-        apiKey: '',
-      },
-      replicate: {
-        name: 'replicate',
-        model: '70b-chat',
-        apiKey: '',
-      },
+      cohere: { name: 'cohere', model: 'command', apiKey: '' },
+      openai: { name: 'openai', model: 'gpt-3.5-turbo', apiKey: '' },
+      replicate: { name: 'replicate', model: '70b-chat', apiKey: '' },
+      google: { name: 'google', model: 'gemini', apiKey: '' },
       envKeyExist: {
         openai: false,
         replicate: false,
         azure: false,
         cohere: false,
+        google: false,
       },
       clearMessages: () => {
         set((state) => ({
@@ -115,6 +116,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           replicate: { ...state.replicate, apiKey: '' },
           azure: { ...state.azure, apiKey: '' },
           cohere: { ...state.cohere, apiKey: '' },
+          google: { ...state.google, apiKey: '' },
         }));
       },
       getExistsInEnv: () => {
@@ -130,6 +132,7 @@ export const useChatSettings = create<ChatSettingsState>()(
             replicate: get().replicate,
             azure: get().azure,
             cohere: get().cohere,
+            google: get().google,
           },
           systemMessage: get().systemMessage,
           n: get().numberOfMessages,
@@ -141,35 +144,17 @@ export const useChatSettings = create<ChatSettingsState>()(
       },
       getProvider: () => {
         const provider = get().provider;
-        if (provider === 'openai') {
-          return get().openai;
-        } else if (provider === 'replicate') {
-          return get().replicate;
-        } else if (provider === 'azure') {
-          return get().azure;
-        } else if (provider === 'cohere') {
-          return get().cohere;
-        } else {
-          // return default provider
-          console.log('returning default provider');
+        if (!provider) {
           return get().openai;
         }
+        return get()[provider];
       },
       getModel: () => {
         const provider = get().provider;
-        if (provider === 'openai') {
-          return get().openai.model;
-        } else if (provider === 'replicate') {
-          return get().replicate.model;
-        } else if (provider === 'azure') {
-          return get().azure.model;
-        } else if (provider === 'cohere') {
-          return get().cohere.model;
-        } else {
-          // return default model
-          console.log('returning default model');
+        if (!provider) {
           return get().openai.model;
         }
+        return get()[provider].model;
       },
       updateChatSettings: (settings: Partial<ChatSettingsState>) => {
         set((state) => ({
@@ -181,10 +166,12 @@ export const useChatSettings = create<ChatSettingsState>()(
         openai,
         replicate,
         cohere,
+        google,
       }: {
         openai: boolean;
         replicate: boolean;
         cohere: boolean;
+        google: boolean;
       }) => {
         set((state) => ({
           envKeyExist: {
@@ -192,6 +179,7 @@ export const useChatSettings = create<ChatSettingsState>()(
             openai,
             replicate,
             cohere,
+            google,
           },
         }));
       },

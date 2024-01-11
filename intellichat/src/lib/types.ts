@@ -4,4 +4,9 @@ export type Message = {
   role: 'user' | 'assistant';
 };
 
-export type ChatProvider = 'openai' | 'replicate' | 'azure' | 'cohere';
+export type ChatProvider =
+  | 'openai'
+  | 'replicate'
+  | 'azure'
+  | 'cohere'
+  | 'google';

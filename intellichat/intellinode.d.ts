@@ -1,5 +1,11 @@
 declare module 'intellinode' {
-  type SupportedChatModels = 'openai' | 'replicate' | 'sagemaker';
+  type SupportedChatModels =
+    | 'openai'
+    | 'replicate'
+    | 'sagemaker'
+    | 'azure'
+    | 'gemini'
+    | 'cohere';
 
   class Chatbot {
     constructor(
@@ -10,7 +16,13 @@ declare module 'intellinode' {
         oneKey?: string;
       }
     );
-    chat(modelInput?: ChatGPTInput | LLamaReplicateInput | CohereInput);
+    chat(
+      modelInput?:
+        | ChatGPTInput
+        | LLamaReplicateInput
+        | CohereInput
+        | GeminiInput
+    );
   }
 
   class ChatGPTInput {
@@ -46,6 +58,13 @@ declare module 'intellinode' {
 
   class CohereInput {
     constructor(message: string, options?: { model?: string; web?: boolean });
+
+    addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
+  }
+
+  class GeminiInput {
+    constructor(message: string, options?: { model?: string });
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;

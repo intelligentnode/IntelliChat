@@ -18,7 +18,7 @@ export const ChatMessage = ({ role, content }: Props) => {
         {isUser ? (
           <>{content}</>
         ) : (
-          <ReactMarkdown className='prose prose-invert max-w-none'>
+          <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal'>
             {content}
           </ReactMarkdown>
         )}

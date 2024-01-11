@@ -5,80 +5,30 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Azure, Cohere, OpenAI, Replicate } from '@/lib/chat-providers';
+import { Cohere, Google, OpenAI, Replicate } from '@/lib/chat-providers';
 
 import { useChatSettings } from '@/store/chat-settings';
-import { AIProviderType, AIProviders } from '@/lib/chat-providers';
+import { AIProviders } from '@/lib/chat-providers';
+import { formSchema } from '@/lib/schema';
 
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import FieldTooltip from '@/components/field-tooltip';
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import ApiKeyInput from './apikey-input';
+import {
+  FormInputField,
+  FormSelectField,
+  FormSwitchField,
+} from '@/components/form-ui';
+import ApiKeyInput from '@/components/apikey-input';
 
-const formSchema = z
-  .object({
-    systemMessage: z.string(),
-    numberOfMessages: z.number().min(2).max(6),
-    providerName: z.enum(['openai', 'replicate', 'azure', 'cohere']),
-    providerModel: z.string(),
-    openaiKey: z.string(),
-    replicateKey: z.string(),
-    cohereKey: z.string(),
-    azureKey: z.string(),
-    azureResourceName: z.string(),
-    azureModelName: z.string(),
-    azureEmbeddingName: z.string(),
-    withContext: z.boolean(),
-    intellinodeData: z.boolean(),
-    oneKey: z.string().optional(),
-    envKeyExist: z.object({
-      openai: z.boolean(),
-      replicate: z.boolean(),
-    }),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      (data.providerModel === 'openai' || data.withContext) &&
-      !data.envKeyExist.openai &&
-      !data.openaiKey
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'OpenAI API Key is required.',
-        path: ['openaiKey'],
-      });
-    }
-    if (
-      data.providerModel === 'replicate' &&
-      !data.envKeyExist.replicate &&
-      !data.replicateKey
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Replicate API Key is required.',
-        path: ['replicateKey'],
-      });
-    }
-  });
+const providersOptions = [
+  ...Object.keys(AIProviders).map((key) => ({
+    label: AIProviders[key as keyof typeof AIProviders].name,
+    value: key,
+    _key: key,
+  })),
+  { label: 'azure', value: 'azure', _key: 'azure' },
+];
 
 export default function ChatSettings({ close }: { close: () => void }) {
   const systemMessage = useChatSettings((s) => s.systemMessage);
@@ -88,6 +38,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const replicate = useChatSettings((s) => s.replicate);
   const azure = useChatSettings((s) => s.azure);
   const cohere = useChatSettings((s) => s.cohere);
+  const google = useChatSettings((s) => s.google);
   const withContext = useChatSettings((s) => s.withContext);
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
@@ -106,6 +57,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     replicateKey: replicate.apiKey,
     azureKey: azure.apiKey,
     cohereKey: cohere.apiKey,
+    googleKey: google.apiKey,
     azureResourceName: azure.resourceName,
     azureModelName: azure.model,
     azureEmbeddingName: azure.embeddingName,
@@ -118,7 +70,30 @@ export default function ChatSettings({ close }: { close: () => void }) {
     },
   };
   const form = useForm<z.infer<typeof formSchema>>({
-    values,
+    values: {
+      systemMessage,
+      numberOfMessages,
+      providerName: provider,
+      providerModel: getModel(),
+      openaiKey: openai.apiKey,
+      replicateKey: replicate.apiKey,
+      azureKey: azure.apiKey,
+      cohereKey: cohere.apiKey,
+      googleKey: google.apiKey,
+      azureResourceName: azure.resourceName,
+      azureModelName: azure.model,
+      azureEmbeddingName: azure.embeddingName,
+      withContext,
+      intellinodeData,
+      oneKey,
+      envKeyExist: {
+        openai: envKeyExist.openai,
+        replicate: envKeyExist.replicate,
+        azure: envKeyExist.azure,
+        cohere: envKeyExist.cohere,
+        google: envKeyExist.google,
+      },
+    },
     defaultValues: values,
     resolver: zodResolver(formSchema),
   });
@@ -128,6 +103,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     providerName,
     providerModel,
     openaiKey,
+    googleKey,
     replicateKey,
     cohereKey,
     azureEmbeddingName,
@@ -146,6 +122,14 @@ export default function ChatSettings({ close }: { close: () => void }) {
           provider === 'openai'
             ? (providerModel as OpenAI['model'])
             : openai.model,
+      },
+      google: {
+        ...google,
+        apiKey: googleKey,
+        model:
+          provider === 'google'
+            ? (providerModel as Google['model'])
+            : google.model,
       },
       cohere: {
         ...cohere,
@@ -177,7 +161,12 @@ export default function ChatSettings({ close }: { close: () => void }) {
   }
 
   function onChangeProviderName(name: string) {
-    const providerName = name as 'openai' | 'replicate' | 'azure' | 'cohere';
+    const providerName = name as
+      | 'openai'
+      | 'replicate'
+      | 'azure'
+      | 'cohere'
+      | 'google';
     form.setValue('providerName', providerName);
 
     if (providerName !== 'azure') {
@@ -186,279 +175,123 @@ export default function ChatSettings({ close }: { close: () => void }) {
         AIProviders[providerName].models[0] as string
       );
     }
-
-    if (providerName === 'openai' || providerName === 'azure') {
-      form.setValue('withContext', true);
-    } else {
-      form.setValue('withContext', false);
-    }
   }
 
   const watchProviderName = form.watch('providerName');
   const watchIntellinodeData = form.watch('intellinodeData');
 
+  const modelsOptions =
+    watchProviderName === 'azure'
+      ? []
+      : AIProviders[watchProviderName].models.map((model) => ({
+          label: model,
+          value: model,
+          _key: model,
+        }));
+
+  console.log(form.formState.errors);
   return (
     <ScrollArea className='h-full'>
       <Form {...form}>
         <form className='space-y-8' onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
+          <FormInputField
             control={form.control}
             name='systemMessage'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>System Message</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder='You are a helpful assistant!'
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label='System Message'
+            placeholder='You are a helpful assistant!'
           />
-          <FormField
+          <FormInputField
             control={form.control}
             name='numberOfMessages'
-            render={({ field }) => (
-              <FormItem>
-                <div className='flex items-center justify-between gap-2'>
-                  <FormLabel>Number of Messages</FormLabel>
-                  <FieldTooltip>
-                    {`The number of messages to include in a request. The higher
-                    the number, the more context the AI will have to work with.
-                    This will determine the number of messages used to generate
-                    the context when the "Use Chat Context" option is enabled.`}
-                  </FieldTooltip>
-                </div>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type='number'
-                    min={2}
-                    max={6}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label='Number of Messages'
+            type='number'
+            min={2}
+            max={6}
+            withTooltip={true}
+            tooltipText={`The number of messages to include in a request. The higher
+              the number, the more context the AI will have to work with.
+              This will determine the number of messages used to generate
+              the context when the "Use Chat Context" option is enabled.`}
           />
-
-          <FormField
+          <FormSelectField
             control={form.control}
+            placeholder='Select a Provider'
             name='providerName'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Provider</FormLabel>
-                <FormControl>
-                  <Select
-                    onValueChange={(e) => {
-                      field.onChange(e);
-                      onChangeProviderName(e);
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select a Model' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {Object.keys(AIProviders).map((key) => (
-                          <SelectItem key={key} value={key}>
-                            {AIProviders[key as keyof typeof AIProviders].name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value={'azure'}>azure</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label='Provider'
+            options={providersOptions}
+            onChange={onChangeProviderName}
           />
 
-          {watchProviderName !== 'azure' && (
-            <FormField
-              control={form.control}
-              name='providerModel'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Model</FormLabel>
-                  <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue>{field.value}</SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {AIProviders[
-                            form.watch('providerName') as keyof AIProviderType
-                          ].models.map((model) => (
-                            <SelectItem key={model} value={model}>
-                              {model}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          {watchProviderName == 'azure' && (
+          {watchProviderName === 'azure' ? (
             <div className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='azureKey'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Azure API Key</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type='password'
-                        autoComplete='azure-apiKey'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='azureResourceName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Azure Resource Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+              <FormInputField
                 control={form.control}
                 name='azureModelName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Azure Model Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label='Azure Model Name'
               />
-              <FormField
+              <FormInputField
+                control={form.control}
+                name='azureResourceName'
+                label='Azure Resource Name'
+              />
+              <FormInputField
                 control={form.control}
                 name='azureEmbeddingName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Azure Embedding Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label='Azure Embedding Name'
+              />
+              <FormInputField
+                control={form.control}
+                name='azureKey'
+                label='Azure API Key'
+                autoComplete='azure-apiKey'
+                type='password'
               />
             </div>
-          )}
-          {watchProviderName !== 'azure' && (
+          ) : (
             <>
-              <ApiKeyInput
+              <FormSelectField
                 control={form.control}
-                id='replicate'
-                name='replicateKey'
-                label='Replicate API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
-                withContext={form.watch('withContext')}
+                placeholder='Select a Model'
+                name='providerModel'
+                label='Model'
+                options={modelsOptions}
               />
               <ApiKeyInput
                 control={form.control}
-                id='cohere'
-                name='cohereKey'
-                label='Cohere API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
-                withContext={form.watch('withContext')}
-              />
-              <ApiKeyInput
-                control={form.control}
-                id='openai'
-                name='openaiKey'
-                label='OpenAI API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
+                id={watchProviderName}
+                name={`${watchProviderName}Key`}
+                label={`${watchProviderName
+                  .slice(0, 1)
+                  .toUpperCase()}${watchProviderName.slice(1)} API Key`}
+                provider={watchProviderName}
                 withContext={form.watch('withContext')}
               />
             </>
           )}
-          <FormField
+          <FormSwitchField
             control={form.control}
             name='withContext'
-            render={({ field }) => (
-              <FormItem className='flex items-center justify-between gap-2 space-y-0'>
-                <div className='flex items-center gap-2'>
-                  <FormLabel>Context</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </div>
-                <FieldTooltip>
-                  {`When enabled, the chatbot will dynamically select previous
-                  parts of the conversation that are most relevant to the
-                  current query, using embeddings. The number of parts will be
-                  equal to the number of messages set above.`}
-                </FieldTooltip>
-              </FormItem>
-            )}
+            label='Context'
+            withTooltip={true}
+            tooltipText={`When enabled, the chatbot will dynamically select previous
+              parts of the conversation that are most relevant to the
+              current query, using embeddings. The number of parts will be
+              equal to the number of messages set above.`}
           />
-          <FormField
+          <FormSwitchField
             control={form.control}
             name='intellinodeData'
-            render={({ field }) => (
-              <FormItem className='flex items-center justify-between gap-2 space-y-0'>
-                <div className='flex items-center gap-2'>
-                  <FormLabel>intelliNode Data</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </div>
-                <FieldTooltip>
-                  {`When enabled, you can use the chatbot against your project's data.`}
-                </FieldTooltip>
-              </FormItem>
-            )}
+            label='intelliNode Data'
+            withTooltip={true}
+            tooltipText={`When enabled, you can use the chatbot against your project's data.`}
           />
           {watchIntellinodeData && (
-            <FormField
+            <FormInputField
               control={form.control}
               name={'oneKey'}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>One Key</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type='password'
-                      autoComplete={`cohere-apiKey`}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
+              label='One Key'
+              autoComplete='cohere-apiKey'
+              type='password'
             />
           )}
           <div className='flex justify-between'>

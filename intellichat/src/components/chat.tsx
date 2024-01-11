@@ -82,6 +82,8 @@ export default function Chat() {
           openai: boolean;
           replicate: boolean;
           cohere: boolean;
+          google: boolean;
+          azure: boolean;
         };
       }
       const { error } = await res.json();

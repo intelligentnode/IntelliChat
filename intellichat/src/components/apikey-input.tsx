@@ -17,8 +17,8 @@ export default function ApiKeyInput({
   withContext,
 }: {
   name: string;
-  provider: 'openai' | 'replicate' | 'cohere';
-  id: 'openai' | 'replicate' | 'cohere';
+  provider: 'openai' | 'replicate' | 'cohere' | 'google';
+  id: 'openai' | 'replicate' | 'cohere' | 'google';
   label: string;
   control: any;
   withContext: boolean;
