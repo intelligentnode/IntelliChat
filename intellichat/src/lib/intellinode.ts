@@ -3,6 +3,7 @@ import {
   ChatGPTInput,
   Chatbot,
   CohereInput,
+  GeminiInput,
   LLamaReplicateInput,
   ProxyHelper,
 } from 'intellinode';
@@ -12,6 +13,8 @@ import {
   azureValidator,
   cohereType,
   cohereValidator,
+  googleType,
+  googleValidator,
   openAIType,
   openAIValidator,
   replicateType,
@@ -19,16 +22,19 @@ import {
 } from './validators';
 
 export function getChatProviderKey(provider: ChatProvider) {
-  if (provider === 'openai') {
-    return process.env.OPENAI_API_KEY;
-  } else if (provider === 'replicate') {
-    return process.env.REPLICATE_API_KEY;
-  } else if (provider === 'azure') {
-    return process.env.AZURE_API_KEY;
-  } else if (provider === 'cohere') {
-    return process.env.COHERE_API_KEY;
-  } else {
-    throw new Error('provider is not supported');
+  switch (provider) {
+    case 'openai':
+      return process.env.OPENAI_API_KEY;
+    case 'replicate':
+      return process.env.REPLICATE_API_KEY;
+    case 'azure':
+      return process.env.AZURE_API_KEY;
+    case 'cohere':
+      return process.env.COHERE_API_KEY;
+    case 'google':
+      return process.env.GOOGLE_API_KEY;
+    default:
+      throw new Error('provider is not supported');
   }
 }
 
@@ -66,8 +72,9 @@ export async function getAzureChatResponse({
     apiKey,
     'openai',
     proxy,
-    ...(oneKey ? [oneKey] : [])
+    ...(oneKey ? [{ oneKey }] : [])
   );
+
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
@@ -93,7 +100,7 @@ type getChatResponseParams = {
     role: 'user' | 'assistant';
     content: string;
   }[];
-  provider?: openAIType | replicateType | cohereType;
+  provider?: openAIType | replicateType | cohereType | googleType;
   withContext: boolean;
   n: number;
   contextKey: string;
@@ -101,14 +108,17 @@ type getChatResponseParams = {
 };
 
 const validateProvider = (name: string) => {
-  if (name === 'openai') {
-    return openAIValidator;
-  } else if (name === 'replicate') {
-    return replicateValidator;
-  } else if (name === 'cohere') {
-    return cohereValidator;
-  } else {
-    throw new Error('provider is not supported');
+  switch (name) {
+    case 'openai':
+      return openAIValidator;
+    case 'replicate':
+      return replicateValidator;
+    case 'cohere':
+      return cohereValidator;
+    case 'google':
+      return googleValidator;
+    default:
+      throw new Error('provider is not supported');
   }
 };
 
@@ -164,13 +174,15 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new LLamaReplicateInput(systemMessage, { model });
     case 'cohere':
       return new CohereInput(systemMessage, { model });
+    case 'google':
+      return new GeminiInput(systemMessage, { model });
     default:
       throw new Error('provider is not supported');
   }
 }
 
 function addMessages(
-  chatInput: ChatGPTInput | LLamaReplicateInput | CohereInput,
+  chatInput: ChatGPTInput | LLamaReplicateInput | CohereInput | GeminiInput,
   messages: {
     role: 'user' | 'assistant';
     content: string;
@@ -180,6 +192,10 @@ function addMessages(
     if (m.role === 'user') {
       chatInput.addUserMessage(m.content);
     } else {
+      if (chatInput instanceof GeminiInput) {
+        chatInput.addModelMessage(m.content);
+        return;
+      }
       chatInput.addAssistantMessage(m.content);
     }
   });

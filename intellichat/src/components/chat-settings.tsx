@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Azure, Cohere, OpenAI, Replicate } from '@/lib/chat-providers';
+import { Cohere, Google, OpenAI, Replicate } from '@/lib/chat-providers';
 
 import { useChatSettings } from '@/store/chat-settings';
 import { AIProviderType, AIProviders } from '@/lib/chat-providers';
@@ -38,11 +38,12 @@ const formSchema = z
   .object({
     systemMessage: z.string(),
     numberOfMessages: z.number().min(2).max(6),
-    providerName: z.enum(['openai', 'replicate', 'azure', 'cohere']),
+    providerName: z.enum(['openai', 'replicate', 'azure', 'cohere', 'google']),
     providerModel: z.string(),
     openaiKey: z.string(),
     replicateKey: z.string(),
     cohereKey: z.string(),
+    googleKey: z.string(),
     azureKey: z.string(),
     azureResourceName: z.string(),
     azureModelName: z.string(),
@@ -88,6 +89,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const replicate = useChatSettings((s) => s.replicate);
   const azure = useChatSettings((s) => s.azure);
   const cohere = useChatSettings((s) => s.cohere);
+  const google = useChatSettings((s) => s.google);
   const withContext = useChatSettings((s) => s.withContext);
   const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
@@ -106,6 +108,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     replicateKey: replicate.apiKey,
     azureKey: azure.apiKey,
     cohereKey: cohere.apiKey,
+    googleKey: google.apiKey,
     azureResourceName: azure.resourceName,
     azureModelName: azure.model,
     azureEmbeddingName: azure.embeddingName,
@@ -128,6 +131,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     providerName,
     providerModel,
     openaiKey,
+    googleKey,
     replicateKey,
     cohereKey,
     azureEmbeddingName,
@@ -146,6 +150,14 @@ export default function ChatSettings({ close }: { close: () => void }) {
           provider === 'openai'
             ? (providerModel as OpenAI['model'])
             : openai.model,
+      },
+      google: {
+        ...google,
+        apiKey: googleKey,
+        model:
+          provider === 'google'
+            ? (providerModel as Google['model'])
+            : google.model,
       },
       cohere: {
         ...cohere,
@@ -177,7 +189,12 @@ export default function ChatSettings({ close }: { close: () => void }) {
   }
 
   function onChangeProviderName(name: string) {
-    const providerName = name as 'openai' | 'replicate' | 'azure' | 'cohere';
+    const providerName = name as
+      | 'openai'
+      | 'replicate'
+      | 'azure'
+      | 'cohere'
+      | 'google';
     form.setValue('providerName', providerName);
 
     if (providerName !== 'azure') {
@@ -185,12 +202,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
         'providerModel',
         AIProviders[providerName].models[0] as string
       );
-    }
-
-    if (providerName === 'openai' || providerName === 'azure') {
-      form.setValue('withContext', true);
-    } else {
-      form.setValue('withContext', false);
     }
   }
 
@@ -376,26 +387,12 @@ export default function ChatSettings({ close }: { close: () => void }) {
             <>
               <ApiKeyInput
                 control={form.control}
-                id='replicate'
-                name='replicateKey'
-                label='Replicate API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
-                withContext={form.watch('withContext')}
-              />
-              <ApiKeyInput
-                control={form.control}
-                id='cohere'
-                name='cohereKey'
-                label='Cohere API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
-                withContext={form.watch('withContext')}
-              />
-              <ApiKeyInput
-                control={form.control}
-                id='openai'
-                name='openaiKey'
-                label='OpenAI API Key'
-                provider={form.watch('providerName') as keyof AIProviderType}
+                id={watchProviderName}
+                name={`${watchProviderName}Key`}
+                label={`${watchProviderName
+                  .slice(0, 1)
+                  .toUpperCase()}${watchProviderName.slice(1)} API Key`}
+                provider={watchProviderName}
                 withContext={form.watch('withContext')}
               />
             </>

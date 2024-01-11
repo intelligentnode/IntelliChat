@@ -10,7 +10,13 @@ declare module 'intellinode' {
         oneKey?: string;
       }
     );
-    chat(modelInput?: ChatGPTInput | LLamaReplicateInput | CohereInput);
+    chat(
+      modelInput?:
+        | ChatGPTInput
+        | LLamaReplicateInput
+        | CohereInput
+        | GeminiInput
+    );
   }
 
   class ChatGPTInput {
@@ -49,6 +55,13 @@ declare module 'intellinode' {
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
+  }
+
+  class GeminiInput {
+    constructor(message: string, options?: { model?: string });
+
+    addUserMessage(message: string): void;
+    addModelMessage(message: string): void;
   }
 
   class ChatContext {
