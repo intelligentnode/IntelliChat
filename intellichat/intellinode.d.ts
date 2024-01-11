@@ -1,5 +1,11 @@
 declare module 'intellinode' {
-  type SupportedChatModels = 'openai' | 'replicate' | 'sagemaker';
+  type SupportedChatModels =
+    | 'openai'
+    | 'replicate'
+    | 'sagemaker'
+    | 'azure'
+    | 'gemini'
+    | 'cohere';
 
   class Chatbot {
     constructor(

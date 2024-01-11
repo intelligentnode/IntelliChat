@@ -145,7 +145,7 @@ export async function getChatResponse({
 
   const chatbot = new Chatbot(
     apiKey,
-    name,
+    name === 'google' ? 'gemini' : name,
     null,
     ...(oneKey ? [{ oneKey }] : [])
   );
