@@ -61,7 +61,7 @@ declare module 'intellinode' {
     constructor(message: string, options?: { model?: string });
 
     addUserMessage(message: string): void;
-    addModelMessage(message: string): void;
+    addAssistantMessage(message: string): void;
   }
 
   class ChatContext {

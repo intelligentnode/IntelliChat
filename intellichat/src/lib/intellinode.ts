@@ -192,10 +192,6 @@ function addMessages(
     if (m.role === 'user') {
       chatInput.addUserMessage(m.content);
     } else {
-      if (chatInput instanceof GeminiInput) {
-        chatInput.addModelMessage(m.content);
-        return;
-      }
       chatInput.addAssistantMessage(m.content);
     }
   });
