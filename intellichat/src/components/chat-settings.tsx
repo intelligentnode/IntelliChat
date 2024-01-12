@@ -297,7 +297,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
           <div className='flex justify-between'>
             <Button type='submit'>Save</Button>
             <Button
-              disabled={!hasKey}
               type='button'
               variant={hasKey ? 'destructive' : 'outline'}
               onClick={resetKeys}
