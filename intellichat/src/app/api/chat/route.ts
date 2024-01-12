@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   }
 
   if (!contextKey) {
-    const missingContextKey = `key was not provided, either add it to your .env file or in the chat settings`;
+    const missingContextKey = `OpenAi key was not provided, either add it to your .env file or in the chat settings`;
     return NextResponse.json({ error: missingContextKey }, { status: 400 });
   }
 
