@@ -102,6 +102,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     envKeyExist,
     providerName,
     providerModel,
+    withContext,
     openaiKey,
     googleKey,
     replicateKey,
@@ -113,8 +114,12 @@ export default function ChatSettings({ close }: { close: () => void }) {
     ...values
   }: z.infer<typeof formSchema>) {
     const provider = providerName;
+    if (provider !== 'openai') {
+      withContext = false;
+    }
     updateChatSettings({
       provider,
+      withContext,
       openai: {
         ...openai,
         apiKey: openaiKey,
@@ -268,6 +273,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
               />
             </>
           )}
+          {watchProviderName === 'openai' && (
           <FormSwitchField
             control={form.control}
             name='withContext'
@@ -277,7 +283,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
               parts of the conversation that are most relevant to the
               current query, using embeddings. The number of parts will be
               equal to the number of messages set above.`}
-          />
+          />)}
           <FormSwitchField
             control={form.control}
             name='intellinodeData'
@@ -297,7 +303,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
           <div className='flex justify-between'>
             <Button type='submit'>Save</Button>
             <Button
-              disabled={!hasKey}
               type='button'
               variant={hasKey ? 'destructive' : 'outline'}
               onClick={resetKeys}

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const {
     messages,
     providers,
-    provider = defaultProvider,
+    provider,
     systemMessage = defaultSystemMessage,
     n = 2,
     withContext,
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
 
   const key =
     (provider && providers[provider]?.apiKey) || getChatProviderKey(provider);
+  
   const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
 
   if (!key) {
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: missingKeyError }, { status: 400 });
   }
 
-  if (!contextKey) {
+  if (withContext && !contextKey) {
     const missingContextKey = `OpenAi key was not provided, either add it to your .env file or in the chat settings`;
     return NextResponse.json({ error: missingContextKey }, { status: 400 });
   }
