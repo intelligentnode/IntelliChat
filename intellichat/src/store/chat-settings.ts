@@ -117,6 +117,8 @@ export const useChatSettings = create<ChatSettingsState>()(
           azure: { ...state.azure, apiKey: '' },
           cohere: { ...state.cohere, apiKey: '' },
           google: { ...state.google, apiKey: '' },
+          oneKey: '',
+          intellinodeData: false,
         }));
       },
       getExistsInEnv: () => {

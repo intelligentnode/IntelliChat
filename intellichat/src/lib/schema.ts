@@ -29,7 +29,7 @@ export const formSchema = z
     const name = data.providerName;
     const keyValue = data[`${name}Key`];
     const keyExists = keyValue !== '' || data.envKeyExist[name];
-    if (!data.oneKey && !keyExists) {
+    if ((!data.intellinodeData || !data.oneKey) && !keyExists) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `${name} API Key is required`,

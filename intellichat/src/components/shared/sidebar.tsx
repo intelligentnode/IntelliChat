@@ -22,16 +22,22 @@ export default function SideBar({ title }: { title?: string }) {
   const pathname = usePathname();
   const getExistsInEnv = useChatSettings((s) => s.getExistsInEnv);
   const getProvider = useChatSettings((s) => s.getProvider);
-  const provider = useChatSettings((s) => s.provider);
   const providerkey = getProvider().apiKey;
+  const intellinodeData = useChatSettings((s) => s.intellinodeData);
+  const oneKey = useChatSettings((s) => s.oneKey);
+
   // Open the settings sheet if the user has not set the API keys
   useEffect(() => {
-    const exists = getExistsInEnv();
-    const key = providerkey.trim();
-    if (!exists && key === '') {
+    const keyInState = providerkey.trim();
+    const keyInEnv = getExistsInEnv();
+    const keyExists = keyInState || keyInEnv;
+    const oneKeyInState = oneKey.trim();
+    const oneKeyIsEnabled = intellinodeData;
+
+    if (!keyExists && oneKeyIsEnabled && !oneKeyInState) {
       setIsOpen(true);
     }
-  }, [provider, getExistsInEnv, providerkey]);
+  }, [getExistsInEnv, providerkey, oneKey]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
