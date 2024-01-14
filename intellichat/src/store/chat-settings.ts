@@ -194,10 +194,7 @@ export const useChatSettings = create<ChatSettingsState>()(
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(
-            ([key]) =>
-              !['messages', 'oneKey', 'intellinodeData', 'setOneKey'].includes(
-                key
-              )
+            ([key]) => !['messages', 'intellinodeData'].includes(key)
           )
         ),
       name: 'chat-settings',
