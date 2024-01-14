@@ -194,7 +194,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
           _key: model,
         }));
 
-  console.log(form.formState.errors);
   return (
     <ScrollArea className='h-full'>
       <Form {...form}>
@@ -274,16 +273,17 @@ export default function ChatSettings({ close }: { close: () => void }) {
             </>
           )}
           {watchProviderName === 'openai' && (
-          <FormSwitchField
-            control={form.control}
-            name='withContext'
-            label='Context'
-            withTooltip={true}
-            tooltipText={`When enabled, the chatbot will dynamically select previous
+            <FormSwitchField
+              control={form.control}
+              name='withContext'
+              label='Context'
+              withTooltip={true}
+              tooltipText={`When enabled, the chatbot will dynamically select previous
               parts of the conversation that are most relevant to the
               current query, using embeddings. The number of parts will be
               equal to the number of messages set above.`}
-          />)}
+            />
+          )}
           <FormSwitchField
             control={form.control}
             name='intellinodeData'

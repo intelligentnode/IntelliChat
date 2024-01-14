@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
@@ -13,15 +13,19 @@ import { useToast } from './ui/use-toast';
 import { useSearchParams } from 'next/navigation';
 
 export default function Chat() {
-  const getSettings = useChatSettings((s) => s.getSettings);
-  const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
   const messages = useChatSettings((s) => s.messages);
-  const setMessage = useChatSettings((s) => s.setMessage);
-  const setOneKey = useChatSettings((s) => s.setOneKey);
-  const settings = getSettings();
   const params = useSearchParams();
   const oneKey = params.get('one_key');
-  setOneKey(oneKey);
+
+  const getSettings = useChatSettings((s) => s.getSettings);
+  const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+  const setMessage = useChatSettings((s) => s.setMessage);
+  const setOneKey = useChatSettings((s) => s.setOneKey);
+
+  useEffect(() => {
+    const ok = oneKey ?? getSettings().oneKey;
+    if (ok) setOneKey(ok);
+  }, []);
 
   const { toast } = useToast();
 
@@ -29,16 +33,7 @@ export default function Chat() {
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (messages: Message[]) => {
-      const payload: PostMessagePayload = {
-        messages,
-        provider: settings.provider,
-        providers: settings.providers,
-        systemMessage: settings.systemMessage,
-        withContext: settings.withContext,
-        intellinodeData: settings.intellinodeData,
-        oneKey: settings.oneKey,
-        n: settings.n,
-      };
+      const payload: PostMessagePayload = { messages, ...getSettings() };
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
