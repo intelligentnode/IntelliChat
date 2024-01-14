@@ -21,6 +21,28 @@ import {
   replicateValidator,
 } from './validators';
 
+// We can use this function to get the default provider key if onekey is provided and starts with 'in'
+export function getDefaultProviderKey(provider: ChatProvider, oneKey?: string) {
+  if (!oneKey || (oneKey && !oneKey.startsWith('in'))) {
+    return null;
+  }
+
+  switch (provider) {
+    case 'openai':
+      return process.env.INTELLI_OPENAI_API_KEY;
+    case 'replicate':
+      return process.env.INTELLI_REPLICATE_API_KEY;
+    case 'azure':
+      return process.env.INTELLI_AZURE_API_KEY;
+    case 'cohere':
+      return process.env.INTELLI_COHERE_API_KEY;
+    case 'google':
+      return process.env.INTELLI_GOOGLE_API_KEY;
+    default:
+      return null;
+  }
+}
+
 export function getChatProviderKey(provider: ChatProvider) {
   switch (provider) {
     case 'openai':
@@ -34,7 +56,7 @@ export function getChatProviderKey(provider: ChatProvider) {
     case 'google':
       return process.env.GOOGLE_API_KEY;
     default:
-      throw new Error('provider is not supported');
+      return null;
   }
 }
 
@@ -103,7 +125,7 @@ type getChatResponseParams = {
   provider?: openAIType | replicateType | cohereType | googleType;
   withContext: boolean;
   n: number;
-  contextKey: string;
+  contextKey?: string | null;
   oneKey?: string;
 };
 
@@ -152,6 +174,10 @@ export async function getChatResponse({
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
+    if (!contextKey) {
+      throw new Error('contextKey is required');
+    }
+
     const contextResponse = await getContextResponse({
       apiKey: contextKey,
       messages,

@@ -4,6 +4,7 @@ import {
   getAzureChatResponse,
   getChatProviderKey,
   getChatResponse,
+  getDefaultProviderKey,
 } from '@/lib/intellinode';
 
 const defaultSystemMessage =
@@ -31,14 +32,17 @@ export async function POST(req: Request) {
   } = parsedJson.data;
 
   const key =
-    (provider && providers[provider]?.apiKey) || getChatProviderKey(provider);
-  
-  const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
+    (provider && providers[provider]?.apiKey) ||
+    getChatProviderKey(provider) ||
+    getDefaultProviderKey(provider, oneKey);
 
   if (!key) {
+    console.log('error');
     const missingKeyError = `no api key provided for ${provider}, either add it to your .env file or in the chat settings`;
     return NextResponse.json({ error: missingKeyError }, { status: 400 });
   }
+
+  const contextKey = providers.openai?.apiKey || getChatProviderKey('openai');
 
   if (withContext && !contextKey) {
     const missingContextKey = `OpenAi key was not provided, either add it to your .env file or in the chat settings`;
@@ -53,6 +57,7 @@ export async function POST(req: Request) {
   const chatSystemMessage =
     systemMessage.trim() !== '' ? systemMessage : defaultSystemMessage;
   const chatProvider = provider || defaultProvider;
+  const chatProviderProps = providers[chatProvider];
 
   try {
     if (chatProvider === 'azure' && providers.azure) {
@@ -65,9 +70,9 @@ export async function POST(req: Request) {
         oneKey,
       });
       return NextResponse.json({ response: responses });
-    } else if (providers[provider] && providers[provider].name !== 'azure') {
+    } else if (chatProviderProps && chatProviderProps?.name !== 'azure') {
       const responses = await getChatResponse({
-        provider: { ...providers[provider], apiKey: key },
+        provider: { ...chatProviderProps, apiKey: key },
         systemMessage: chatSystemMessage,
         withContext,
         contextKey,
