@@ -114,12 +114,9 @@ export default function ChatSettings({ close }: { close: () => void }) {
     ...values
   }: z.infer<typeof formSchema>) {
     const provider = providerName;
-    if (provider !== 'openai') {
-      withContext = false;
-    }
     updateChatSettings({
       provider,
-      withContext,
+      withContext: provider !== 'openai' ? false : withContext,
       openai: {
         ...openai,
         apiKey: openaiKey,
