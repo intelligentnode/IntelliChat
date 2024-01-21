@@ -18,7 +18,7 @@ import {
   FormSwitchField,
 } from '@/components/form-ui';
 import ApiKeyInput from '@/components/apikey-input';
-import { SupportedProvidersNamesType, providerNames } from '@/lib/validators';
+import { SupportedProvidersNamesType } from '@/lib/validators';
 
 const providersOptions = [
   ...Object.keys(AIProviders).map((key) => ({
@@ -36,6 +36,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const withContext = useChatSettings((s) => s.withContext);
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
   const oneKey = useChatSettings((s) => s.oneKey);
+  const envKeys = useChatSettings((s) => s.envKeys);
   const getModel = useChatSettings((s) => s.getModel);
   const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
   const resetKeys = useChatSettings((s) => s.resetState);
@@ -67,7 +68,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     ...values
   }: z.infer<typeof formSchema>) {
     const provider = providerName;
-    updateChatSettings({
+    const payload = {
       provider,
       withContext: provider !== 'openai' ? false : withContext,
       providers: {
@@ -78,7 +79,9 @@ export default function ChatSettings({ close }: { close: () => void }) {
         },
       },
       ...values,
-    });
+    };
+    console.log(payload);
+    updateChatSettings(payload);
     close();
   }
 
