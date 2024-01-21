@@ -18,7 +18,7 @@ export default function Chat() {
   const oneKey = params.get('one_key');
 
   const getSettings = useChatSettings((s) => s.getSettings);
-  const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+  const setEnvKeys = useChatSettings((s) => s.setEnvKeys);
   const setMessage = useChatSettings((s) => s.setMessage);
   const setOneKey = useChatSettings((s) => s.setOneKey);
 
@@ -85,7 +85,7 @@ export default function Chat() {
       throw new Error(`${error}`);
     },
     onSuccess: (data) => {
-      setEnvKeyExist(data);
+      setEnvKeys(data);
     },
   });
 

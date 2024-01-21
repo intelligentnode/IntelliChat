@@ -1,18 +1,9 @@
-import type {
-  Azure,
-  Cohere,
-  Google,
-  OpenAI,
-  Replicate,
-} from '@/lib/chat-providers';
+import { envKeys } from '@/lib/ai-providers';
 import type { Message } from '@/lib/types';
 import type {
   PostMessagePayload,
-  azureType,
-  cohereType,
-  googleType,
-  openAIType,
-  replicateType,
+  SupportedProvidersNamesType,
+  SupportedProvidersType,
 } from '@/lib/validators';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -21,121 +12,71 @@ type ChatSettingsState = {
   messages: Message[];
   isSidebarOpen: boolean;
   systemMessage: string;
-  provider: 'openai' | 'replicate' | 'azure' | 'cohere' | 'google';
+  provider: SupportedProvidersNamesType;
   numberOfMessages: number;
-  openai: openAIType;
-  replicate: replicateType;
-  azure: azureType;
-  cohere: cohereType;
-  google: googleType;
-  envKeyExist: {
-    openai: boolean;
-    replicate: boolean;
-    azure: boolean;
-    cohere: boolean;
-    google: boolean;
-  };
+  providers: SupportedProvidersType;
   withContext: boolean;
   intellinodeData: boolean;
   oneKey: string;
-  setEnvKeyExist: ({
-    openai,
-    replicate,
-    cohere,
-    google,
-  }: {
-    openai: boolean;
-    replicate: boolean;
-    cohere: boolean;
-    google: boolean;
-  }) => void;
-  getModel: () => string;
-  getExistsInEnv: () => boolean;
+  envKeys: Record<SupportedProvidersNamesType, boolean>;
+  getModel: () => string | undefined;
   getSettings: () => Omit<PostMessagePayload, 'messages'>;
-  getProvider: () => Azure | OpenAI | Replicate | Cohere | Google;
+  getProvider: () => SupportedProvidersType[SupportedProvidersNamesType];
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
   setMessage: (message: Message) => void;
   setOneKey: (key: string | null) => void;
+  setEnvKeys: (envKeys: Record<SupportedProvidersNamesType, boolean>) => void;
   clearMessages: () => void;
-  resetKeys: () => void;
+  resetState: () => void;
+};
+
+const initialProviders: ChatSettingsState['providers'] = {
+  cohere: { name: 'cohere', model: 'command', apiKey: '' },
+  openai: { name: 'openai', model: 'gpt-3.5-turbo', apiKey: '' },
+  replicate: {
+    name: 'replicate',
+    model: '70b-chat',
+    apiKey: '',
+  },
+  google: { name: 'google', model: 'gemini', apiKey: '' },
+  azure: {
+    name: 'azure',
+    model: '',
+    apiKey: '',
+    resourceName: '',
+    embeddingName: '',
+  },
+};
+
+const initialState = {
+  intellinodeData: false,
+  oneKey: '',
+  withContext: false,
+  systemMessage: '',
+  provider: 'openai' as SupportedProvidersNamesType,
+  numberOfMessages: 4,
+  messages: [],
+  isSidebarOpen: false,
+  providers: initialProviders,
 };
 
 export const useChatSettings = create<ChatSettingsState>()(
   persist(
     (set, get) => ({
-      intellinodeData: false,
-      oneKey: '',
-      setOneKey: (key: string | null) => {
-        set((state) => ({
-          ...state,
-          oneKey: key ?? '',
-          intellinodeData: key !== null,
-        }));
-      },
-      withContext: false,
-      systemMessage: '',
-      provider: 'openai',
-      numberOfMessages: 4,
-      messages: [],
-      isSidebarOpen: false,
-      azure: {
-        name: 'azure',
-        model: '',
-        resourceName: '',
-        embeddingName: '',
-        apiKey: '',
-      },
-      cohere: { name: 'cohere', model: 'command', apiKey: '' },
-      openai: { name: 'openai', model: 'gpt-3.5-turbo', apiKey: '' },
-      replicate: { name: 'replicate', model: '70b-chat', apiKey: '' },
-      google: { name: 'google', model: 'gemini', apiKey: '' },
-      envKeyExist: {
-        openai: false,
-        replicate: false,
-        azure: false,
-        cohere: false,
-        google: false,
-      },
-      clearMessages: () => {
-        set((state) => ({
-          ...state,
-          messages: [],
-        }));
-      },
+      ...initialState,
+      envKeys,
+      clearMessages: () => set((state) => ({ ...state, messages: [] })),
       setMessage: (message: Message) => {
-        set((state) => ({
-          ...state,
-          messages: [...state.messages, message],
-        }));
+        set((state) => ({ ...state, messages: [...state.messages, message] }));
       },
-      resetKeys: () => {
-        set((state) => ({
-          ...state,
-          openai: { ...state.openai, apiKey: '' },
-          replicate: { ...state.replicate, apiKey: '' },
-          azure: { ...state.azure, apiKey: '' },
-          cohere: { ...state.cohere, apiKey: '' },
-          google: { ...state.google, apiKey: '' },
-          oneKey: '',
-          intellinodeData: false,
-        }));
-      },
-      getExistsInEnv: () => {
-        const provider = get().provider;
-        return get().envKeyExist[provider];
+      resetState: () => {
+        set((state) => ({ ...state, ...initialState }));
       },
       getSettings: () => {
-        const provider = get().provider;
         let settings: Omit<PostMessagePayload, 'messages'> = {
-          provider,
-          providers: {
-            openai: get().openai,
-            replicate: get().replicate,
-            azure: get().azure,
-            cohere: get().cohere,
-            google: get().google,
-          },
+          provider: get().provider,
+          providers: get().providers,
           systemMessage: get().systemMessage,
           n: get().numberOfMessages,
           withContext: get().withContext,
@@ -146,50 +87,29 @@ export const useChatSettings = create<ChatSettingsState>()(
       },
       getProvider: () => {
         const provider = get().provider;
-        if (!provider) {
-          return get().openai;
-        }
-        return get()[provider];
+        const providers = get().providers;
+        return provider ? providers[provider] : providers.openai;
       },
       getModel: () => {
         const provider = get().provider;
-        if (!provider) {
-          return get().openai.model;
-        }
-        return get()[provider].model;
+        const providers = get().providers;
+        return provider ? providers[provider]?.model : providers.openai?.model;
       },
-      updateChatSettings: (settings: Partial<ChatSettingsState>) => {
+      setEnvKeys: (envKeys: Record<SupportedProvidersNamesType, boolean>) => {
+        set((state) => ({ ...state, envKeys }));
+      },
+      setOneKey: (key: string | null) => {
         set((state) => ({
           ...state,
-          ...settings,
+          oneKey: key ?? '',
+          intellinodeData: key !== null,
         }));
       },
-      setEnvKeyExist: ({
-        openai,
-        replicate,
-        cohere,
-        google,
-      }: {
-        openai: boolean;
-        replicate: boolean;
-        cohere: boolean;
-        google: boolean;
-      }) => {
-        set((state) => ({
-          envKeyExist: {
-            ...state.envKeyExist,
-            openai,
-            replicate,
-            cohere,
-            google,
-          },
-        }));
+      updateChatSettings: (settings: Partial<ChatSettingsState>) => {
+        set((state) => ({ ...state, ...settings }));
       },
-
       toggleSidebar: () => {
-        set((state) => ({
-          isSidebarOpen: !state.isSidebarOpen,
-        }));
+        set((state) => ({ isSidebarOpen: !state.isSidebarOpen }));
       },
     }),
     {

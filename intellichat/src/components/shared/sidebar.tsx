@@ -16,20 +16,24 @@ import {
 import { Button } from '@/components/ui/button';
 import ChatSettings from '@/components/chat-settings';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SupportedProvidersNamesType } from '@/lib/validators';
 
 export default function SideBar({ title }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
-  const getExistsInEnv = useChatSettings((s) => s.getExistsInEnv);
   const getProvider = useChatSettings((s) => s.getProvider);
-  const providerkey = getProvider().apiKey;
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
   const oneKey = useChatSettings((s) => s.oneKey);
+  const envKeys = useChatSettings((s) => s.envKeys);
 
   // Open the settings sheet if the user has not set the API keys
   useEffect(() => {
-    const keyInState = providerkey.trim();
-    const keyInEnv = getExistsInEnv();
+    const provider = getProvider();
+    const providerkey = provider?.apiKey;
+    const keyInState = providerkey ? providerkey.trim() : undefined;
+    const keyInEnv = provider
+      ? envKeys[provider.name as SupportedProvidersNamesType]
+      : false;
     const keyExists = keyInState || keyInEnv;
     const oneKeyInState = oneKey.trim();
     const oneKeyIsEnabled = intellinodeData;
@@ -37,7 +41,7 @@ export default function SideBar({ title }: { title?: string }) {
     if (!keyExists && oneKeyIsEnabled && !oneKeyInState) {
       setIsOpen(true);
     }
-  }, [getExistsInEnv, providerkey, oneKey]);
+  }, [getProvider, oneKey]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>

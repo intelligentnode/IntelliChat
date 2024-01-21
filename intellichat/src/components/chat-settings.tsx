@@ -5,10 +5,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Cohere, Google, OpenAI, Replicate } from '@/lib/chat-providers';
-
 import { useChatSettings } from '@/store/chat-settings';
-import { AIProviders } from '@/lib/chat-providers';
+import { AIProviders, envKeys } from '@/lib/ai-providers';
 import { formSchema } from '@/lib/schema';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,6 +18,7 @@ import {
   FormSwitchField,
 } from '@/components/form-ui';
 import ApiKeyInput from '@/components/apikey-input';
+import { SupportedProvidersNamesType, providerNames } from '@/lib/validators';
 
 const providersOptions = [
   ...Object.keys(AIProviders).map((key) => ({
@@ -27,155 +26,67 @@ const providersOptions = [
     value: key,
     _key: key,
   })),
-  { label: 'azure', value: 'azure', _key: 'azure' },
 ];
 
 export default function ChatSettings({ close }: { close: () => void }) {
   const systemMessage = useChatSettings((s) => s.systemMessage);
   const numberOfMessages = useChatSettings((s) => s.numberOfMessages);
   const provider = useChatSettings((s) => s.provider);
-  const openai = useChatSettings((s) => s.openai);
-  const replicate = useChatSettings((s) => s.replicate);
-  const azure = useChatSettings((s) => s.azure);
-  const cohere = useChatSettings((s) => s.cohere);
-  const google = useChatSettings((s) => s.google);
+  const providers = useChatSettings((s) => s.providers);
   const withContext = useChatSettings((s) => s.withContext);
-  const envKeyExist = useChatSettings((s) => s.envKeyExist);
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
   const oneKey = useChatSettings((s) => s.oneKey);
   const getModel = useChatSettings((s) => s.getModel);
   const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
-  const resetKeys = useChatSettings((s) => s.resetKeys);
-  const hasKey = openai.apiKey || replicate.apiKey || azure.apiKey;
+  const resetKeys = useChatSettings((s) => s.resetState);
 
-  const values = {
+  const defaultFormValues = {
     systemMessage,
     numberOfMessages,
+    // The selected provider name and its selected model
     providerName: provider,
     providerModel: getModel(),
-    openaiKey: openai.apiKey,
-    replicateKey: replicate.apiKey,
-    azureKey: azure.apiKey,
-    cohereKey: cohere.apiKey,
-    googleKey: google.apiKey,
-    azureResourceName: azure.resourceName,
-    azureModelName: azure.model,
-    azureEmbeddingName: azure.embeddingName,
+    // The API keys for each provider
+    providers,
     withContext,
     intellinodeData,
     oneKey,
-    envKeyExist: {
-      openai: envKeyExist.openai,
-      replicate: envKeyExist.replicate,
-    },
+    envKeys,
   };
   const form = useForm<z.infer<typeof formSchema>>({
-    values: {
-      systemMessage,
-      numberOfMessages,
-      providerName: provider,
-      providerModel: getModel(),
-      openaiKey: openai.apiKey,
-      replicateKey: replicate.apiKey,
-      azureKey: azure.apiKey,
-      cohereKey: cohere.apiKey,
-      googleKey: google.apiKey,
-      azureResourceName: azure.resourceName,
-      azureModelName: azure.model,
-      azureEmbeddingName: azure.embeddingName,
-      withContext,
-      intellinodeData,
-      oneKey,
-      envKeyExist: {
-        openai: envKeyExist.openai,
-        replicate: envKeyExist.replicate,
-        azure: envKeyExist.azure,
-        cohere: envKeyExist.cohere,
-        google: envKeyExist.google,
-      },
-    },
-    defaultValues: values,
+    values: defaultFormValues,
+    defaultValues: defaultFormValues,
     resolver: zodResolver(formSchema),
   });
 
   function onSubmit({
-    envKeyExist,
     providerName,
     providerModel,
     withContext,
-    openaiKey,
-    googleKey,
-    replicateKey,
-    cohereKey,
-    azureEmbeddingName,
-    azureResourceName,
-    azureModelName,
-    azureKey,
+    providers,
     ...values
   }: z.infer<typeof formSchema>) {
     const provider = providerName;
     updateChatSettings({
       provider,
       withContext: provider !== 'openai' ? false : withContext,
-      openai: {
-        ...openai,
-        apiKey: openaiKey,
-        model:
-          provider === 'openai'
-            ? (providerModel as OpenAI['model'])
-            : openai.model,
+      providers: {
+        ...providers,
+        [provider]: {
+          ...providers[provider],
+          model: providerModel,
+        },
       },
-      google: {
-        ...google,
-        apiKey: googleKey,
-        model:
-          provider === 'google'
-            ? (providerModel as Google['model'])
-            : google.model,
-      },
-      cohere: {
-        ...cohere,
-        apiKey: cohereKey,
-        model:
-          provider === 'cohere'
-            ? (providerModel as Cohere['model'])
-            : cohere.model,
-      },
-      replicate: {
-        ...replicate,
-        apiKey: replicateKey,
-        model:
-          provider === 'replicate'
-            ? (providerModel as Replicate['model'])
-            : replicate.model,
-      },
-      azure: {
-        ...azure,
-        apiKey: azureKey,
-        resourceName: azureResourceName,
-        model: azureModelName,
-        embeddingName: azureEmbeddingName,
-      },
-
       ...values,
     });
     close();
   }
 
-  function onChangeProviderName(name: string) {
-    const providerName = name as
-      | 'openai'
-      | 'replicate'
-      | 'azure'
-      | 'cohere'
-      | 'google';
-    form.setValue('providerName', providerName);
+  function onChangeProviderName(name: SupportedProvidersNamesType) {
+    form.setValue('providerName', name);
 
-    if (providerName !== 'azure') {
-      form.setValue(
-        'providerModel',
-        AIProviders[providerName].models[0] as string
-      );
+    if (name !== 'azure') {
+      form.setValue('providerModel', AIProviders[name].models[0] as string);
     }
   }
 
@@ -190,7 +101,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
           value: model,
           _key: model,
         }));
-
   return (
     <ScrollArea className='h-full'>
       <Form {...form}>
@@ -227,22 +137,22 @@ export default function ChatSettings({ close }: { close: () => void }) {
             <div className='space-y-4'>
               <FormInputField
                 control={form.control}
-                name='azureModelName'
+                name='azure.model'
                 label='Azure Model Name'
               />
               <FormInputField
                 control={form.control}
-                name='azureResourceName'
+                name='azure.resourceName'
                 label='Azure Resource Name'
               />
               <FormInputField
                 control={form.control}
-                name='azureEmbeddingName'
+                name='azure.embeddingName'
                 label='Azure Embedding Name'
               />
               <FormInputField
                 control={form.control}
-                name='azureKey'
+                name='azure.apiKey'
                 label='Azure API Key'
                 autoComplete='azure-apiKey'
                 type='password'
@@ -259,8 +169,8 @@ export default function ChatSettings({ close }: { close: () => void }) {
               />
               <ApiKeyInput
                 control={form.control}
-                id={watchProviderName}
-                name={`${watchProviderName}Key`}
+                id={`${watchProviderName}`}
+                name={`providers.${watchProviderName}.apiKey`}
                 label={`${watchProviderName
                   .slice(0, 1)
                   .toUpperCase()}${watchProviderName.slice(1)} API Key`}
@@ -299,11 +209,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
           )}
           <div className='flex justify-between'>
             <Button type='submit'>Save</Button>
-            <Button
-              type='button'
-              variant={hasKey ? 'destructive' : 'outline'}
-              onClick={resetKeys}
-            >
+            <Button type='button' variant='outline' onClick={resetKeys}>
               Reset Keys
             </Button>
           </div>
