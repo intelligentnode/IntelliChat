@@ -71,7 +71,8 @@ export const useChatSettings = create<ChatSettingsState>()(
         set((state) => ({ ...state, messages: [...state.messages, message] }));
       },
       resetState: () => {
-        set((state) => ({ ...state, ...initialState }));
+        const { messages, ...rest } = initialState;
+        set((state) => ({ ...state, ...rest }));
       },
       getSettings: () => {
         let settings: Omit<PostMessagePayload, 'messages'> = {
