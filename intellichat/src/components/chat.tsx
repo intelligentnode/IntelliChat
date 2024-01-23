@@ -32,8 +32,7 @@ export default function Chat() {
   const input = React.useRef<HTMLTextAreaElement>(null);
 
   const { mutate, isLoading } = useMutation({
-    mutationFn: async (messages: Message[]) => {
-      const payload: PostMessagePayload = { messages, ...getSettings() };
+    mutationFn: async (payload: PostMessagePayload) => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -99,7 +98,11 @@ export default function Chat() {
       role: 'user',
     } as Message;
     setMessage(prompt);
-    mutate(messages ? [...messages, prompt] : [prompt]);
+    const payload: PostMessagePayload = {
+      messages: messages ? [...messages, prompt] : [prompt],
+      ...getSettings(),
+    };
+    mutate(payload);
     input.current!.value = '';
   };
 

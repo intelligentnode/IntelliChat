@@ -39,7 +39,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const envKeys = useChatSettings((s) => s.envKeys);
   const getModel = useChatSettings((s) => s.getModel);
   const updateChatSettings = useChatSettings((s) => s.updateChatSettings);
-  const resetKeys = useChatSettings((s) => s.resetState);
+  const reset = useChatSettings((s) => s.resetState);
 
   const defaultFormValues = {
     systemMessage,
@@ -212,8 +212,8 @@ export default function ChatSettings({ close }: { close: () => void }) {
           )}
           <div className='flex justify-between'>
             <Button type='submit'>Save</Button>
-            <Button type='button' variant='outline' onClick={resetKeys}>
-              Reset Keys
+            <Button type='button' variant='outline' onClick={reset}>
+              Reset
             </Button>
           </div>
         </form>
