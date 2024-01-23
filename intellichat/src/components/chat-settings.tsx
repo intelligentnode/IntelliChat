@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useChatSettings } from '@/store/chat-settings';
-import { AIProviders, envKeys } from '@/lib/ai-providers';
+import { AIProviders } from '@/lib/ai-providers';
 import { formSchema } from '@/lib/schema';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -75,7 +75,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
         ...providers,
         [provider]: {
           ...providers[provider],
-          model: providerModel,
+          model: provider === 'azure' ? providers.azure?.model : providerModel,
         },
       },
       ...values,
@@ -103,6 +103,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
           value: model,
           _key: model,
         }));
+
   return (
     <ScrollArea className='h-full'>
       <Form {...form}>
@@ -139,22 +140,22 @@ export default function ChatSettings({ close }: { close: () => void }) {
             <div className='space-y-4'>
               <FormInputField
                 control={form.control}
-                name='azure.model'
+                name='providers.azure.model'
                 label='Azure Model Name'
               />
               <FormInputField
                 control={form.control}
-                name='azure.resourceName'
+                name='providers.azure.resourceName'
                 label='Azure Resource Name'
               />
               <FormInputField
                 control={form.control}
-                name='azure.embeddingName'
+                name='providers.azure.embeddingName'
                 label='Azure Embedding Name'
               />
               <FormInputField
                 control={form.control}
-                name='azure.apiKey'
+                name='providers.azure.apiKey'
                 label='Azure API Key'
                 autoComplete='azure-apiKey'
                 type='password'

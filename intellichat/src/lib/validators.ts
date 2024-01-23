@@ -13,7 +13,7 @@ const createProviderValidator = (
 ) => {
   return z.object({
     name: z.literal(provider.name),
-    model: z.enum(provider.models),
+    model: provider.name !== 'azure' ? z.enum(provider.models) : z.string(),
     apiKey: z.string(),
   });
 };
