@@ -18,15 +18,15 @@ export default function ApiKeyInput({
 }: {
   name: string;
   provider: 'openai' | 'replicate' | 'cohere' | 'google';
-  id: 'openai' | 'replicate' | 'cohere' | 'google';
+  id: string;
   label: string;
   control: any;
   withContext: boolean;
 }) {
-  const envKeyExist = useChatSettings((s) => s.envKeyExist);
+  const envKeys = useChatSettings((s) => s.envKeys);
   const isVisible = provider === id || (withContext && id === 'openai');
   if (!isVisible) return null;
-
+  const hasEnvKey = envKeys[id];
   return (
     <FormField
       control={control}
@@ -37,7 +37,7 @@ export default function ApiKeyInput({
           <FormControl>
             <Input {...field} type='password' autoComplete={`${id}-apiKey`} />
           </FormControl>
-          {envKeyExist[id] && (
+          {hasEnvKey && (
             <FormDescription>
               API Key is set as an environment variable, but you can override it
               here.

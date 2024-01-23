@@ -18,7 +18,7 @@ export default function Chat() {
   const oneKey = params.get('one_key');
 
   const getSettings = useChatSettings((s) => s.getSettings);
-  const setEnvKeyExist = useChatSettings((s) => s.setEnvKeyExist);
+  const setEnvKeys = useChatSettings((s) => s.setEnvKeys);
   const setMessage = useChatSettings((s) => s.setMessage);
   const setOneKey = useChatSettings((s) => s.setOneKey);
 
@@ -32,8 +32,7 @@ export default function Chat() {
   const input = React.useRef<HTMLTextAreaElement>(null);
 
   const { mutate, isLoading } = useMutation({
-    mutationFn: async (messages: Message[]) => {
-      const payload: PostMessagePayload = { messages, ...getSettings() };
+    mutationFn: async (payload: PostMessagePayload) => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -85,7 +84,7 @@ export default function Chat() {
       throw new Error(`${error}`);
     },
     onSuccess: (data) => {
-      setEnvKeyExist(data);
+      setEnvKeys(data);
     },
   });
 
@@ -99,7 +98,11 @@ export default function Chat() {
       role: 'user',
     } as Message;
     setMessage(prompt);
-    mutate(messages ? [...messages, prompt] : [prompt]);
+    const payload: PostMessagePayload = {
+      messages: messages ? [...messages, prompt] : [prompt],
+      ...getSettings(),
+    };
+    mutate(payload);
     input.current!.value = '';
   };
 
