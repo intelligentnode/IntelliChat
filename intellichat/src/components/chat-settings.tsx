@@ -170,6 +170,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
                 options={modelsOptions}
               />
               <ApiKeyInput
+                key={`${watchProviderName}-key`}
                 control={form.control}
                 id={`${watchProviderName}`}
                 name={`providers.${watchProviderName}.apiKey`}
