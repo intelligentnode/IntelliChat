@@ -80,7 +80,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
       },
       ...values,
     };
-    console.log(payload);
     updateChatSettings(payload);
     close();
   }
