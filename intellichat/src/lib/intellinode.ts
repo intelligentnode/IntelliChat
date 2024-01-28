@@ -131,6 +131,7 @@ type getChatResponseParams = {
   n: number;
   contextKey?: string | null;
   oneKey?: string;
+  intellinodeData?: boolean;
 };
 
 const validateProvider = (name: string) => {
@@ -158,6 +159,7 @@ export async function getChatResponse({
   n,
   contextKey,
   oneKey,
+  intellinodeData,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
@@ -175,7 +177,7 @@ export async function getChatResponse({
     apiKey,
     name === 'google' ? 'gemini' : name,
     null,
-    ...(oneKey ? [{ oneKey }] : [])
+    ...(oneKey && intellinodeData ? [{ oneKey }] : [])
   );
   const input = getChatInput(name, model, systemMessage);
 
@@ -193,23 +195,29 @@ export async function getChatResponse({
   } else {
     addMessages(input, messages);
   }
-  const responses = await chatbot.chat(input);
-  return responses[0];
+  const responses: {
+    result: string[];
+    references?: string;
+  } = await chatbot.chat(input);
+  return responses;
 }
 
 function getChatInput(provider: string, model: string, systemMessage: string) {
   switch (provider) {
     case 'openai':
     case 'azure':
-      return new ChatGPTInput(systemMessage, { model });
+      return new ChatGPTInput(systemMessage, { model, attachReference: true });
     case 'replicate':
-      return new LLamaReplicateInput(systemMessage, { model });
+      return new LLamaReplicateInput(systemMessage, {
+        model,
+        attachReference: true,
+      });
     case 'cohere':
-      return new CohereInput(systemMessage, { model });
+      return new CohereInput(systemMessage, { model, attachReference: true });
     case 'google':
-      return new GeminiInput(systemMessage, { model });
+      return new GeminiInput(systemMessage, { model, attachReference: true });
     case 'mistral':
-      return new MistralInput(systemMessage, { model });
+      return new MistralInput(systemMessage, { model, attachReference: true });
     default:
       throw new Error('provider is not supported');
   }

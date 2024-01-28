@@ -38,18 +38,25 @@ export default function Chat() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const json: { response: string } = await res.json();
+        const json: {
+          response: string[];
+          references: { [key: string]: string } | null;
+        } = await res.json();
         return json;
       }
       const { error } = await res.json();
       throw new Error(`${error}`);
     },
     onSuccess: (data) => {
-      const { response } = data;
+      const { response, references } = data;
       if (!response) return;
+      const refsSet = references ? new Set(Object.keys(references)) : null;
+      // @ts-expect-error
+      const refs = references ? [...refsSet.keys()] : null;
       setMessage({
         id: nanoid(),
-        content: response,
+        content: response[0],
+        references: refs,
         role: 'assistant',
       });
     },
@@ -105,7 +112,7 @@ export default function Chat() {
     mutate(payload);
     input.current!.value = '';
   };
-
+  console.log(messages);
   return (
     <Container className='relative grid min-h-[calc(100vh-88px)] grid-rows-[1fr,min-content]'>
       <div className='py-10'>

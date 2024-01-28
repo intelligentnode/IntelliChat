@@ -14,12 +14,15 @@ export const ChatPanel = ({
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
-
   if (chat) {
     return (
       <>
-        {chat.map((message) => (
-          <ChatMessage key={message.id} {...message} />
+        {chat.map((message, index) => (
+          <ChatMessage
+            key={message.id}
+            {...message}
+            last={index === chat.length - 1}
+          />
         ))}
         <div ref={endRef} />
       </>

@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         withContext,
         messages,
         n,
-        oneKey,
+        oneKey: intellinodeData ? oneKey : undefined,
       });
       return NextResponse.json({ response: responses });
     } else if (chatProviderProps && chatProviderProps?.name !== 'azure') {
@@ -78,9 +78,13 @@ export async function POST(req: Request) {
         contextKey,
         messages,
         n,
-        oneKey,
+        oneKey: intellinodeData ? oneKey : undefined,
+        intellinodeData,
       });
-      return NextResponse.json({ response: responses });
+      return NextResponse.json({
+        response: responses.result,
+        references: responses.references,
+      });
     }
   } catch (e) {
     console.log(e);
