@@ -39,6 +39,7 @@ declare module 'intellinode' {
         temperature?: number;
         maxTokens?: number;
         numberOfOutputs?: number;
+        attachReference?: boolean;
       }
     );
 
@@ -51,28 +52,53 @@ declare module 'intellinode' {
   }
 
   class LLamaReplicateInput {
-    constructor(message: string, options?: { model?: string });
+    constructor(
+      message: string,
+      options?: {
+        model?: string;
+        attachReference?: boolean;
+      }
+    );
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
   }
 
   class CohereInput {
-    constructor(message: string, options?: { model?: string; web?: boolean });
+    constructor(
+      message: string,
+      options?: {
+        model?: string;
+        web?: boolean;
+        attachReference?: boolean;
+      }
+    );
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
   }
 
   class GeminiInput {
-    constructor(message: string, options?: { model?: string });
+    constructor(
+      message: string,
+      options?: {
+        model?: string;
+        attachReference?: boolean;
+      }
+    );
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
   }
 
   class MistralInput {
-    constructor(message: string, options?: { model?: string });
+    constructor(
+      message: string,
+      options?: {
+        model?: string;
+        attachReference?: boolean;
+      }
+    );
 
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;

@@ -80,7 +80,10 @@ export async function POST(req: Request) {
         n,
         oneKey,
       });
-      return NextResponse.json({ response: responses });
+      return NextResponse.json({
+        response: responses.result,
+        references: responses.references,
+      });
     }
   } catch (e) {
     console.log(e);
