@@ -12,6 +12,7 @@ const ReplicateModels = [
 ] as const;
 const CohereModels = ['command'] as const;
 const GoogleModels = ['gemini'] as const;
+const MistralModels = ['mistral-tiny', 'mistral-medium'] as const;
 
 export const AIProviders = {
   openai: {
@@ -29,6 +30,10 @@ export const AIProviders = {
   google: {
     name: 'google' as const,
     models: GoogleModels,
+  },
+  mistral: {
+    name: 'mistral' as const,
+    models: MistralModels,
   },
   // azure is a special case, it has a different validator
   // and the model names are entered manually instead of being a list

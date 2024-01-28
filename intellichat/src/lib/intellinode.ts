@@ -5,6 +5,7 @@ import {
   CohereInput,
   GeminiInput,
   LLamaReplicateInput,
+  MistralInput,
   ProxyHelper,
 } from 'intellinode';
 import { ChatProvider } from './types';
@@ -15,6 +16,7 @@ import {
   cohereValidator,
   googleType,
   googleValidator,
+  mistralValidator,
   openAIType,
   openAIValidator,
   replicateType,
@@ -55,6 +57,8 @@ export function getChatProviderKey(provider: ChatProvider) {
       return process.env.COHERE_API_KEY;
     case 'google':
       return process.env.GOOGLE_API_KEY;
+    case 'mistral':
+      return process.env.MISTRAL_API_KEY;
     default:
       return null;
   }
@@ -139,6 +143,8 @@ const validateProvider = (name: string) => {
       return cohereValidator;
     case 'google':
       return googleValidator;
+    case 'mistral':
+      return mistralValidator;
     default:
       throw new Error('provider is not supported');
   }
@@ -202,6 +208,8 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new CohereInput(systemMessage, { model });
     case 'google':
       return new GeminiInput(systemMessage, { model });
+    case 'mistral':
+      return new MistralInput(systemMessage, { model });
     default:
       throw new Error('provider is not supported');
   }
