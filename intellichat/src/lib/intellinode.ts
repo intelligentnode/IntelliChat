@@ -131,6 +131,7 @@ type getChatResponseParams = {
   n: number;
   contextKey?: string | null;
   oneKey?: string;
+  intellinodeData?: boolean;
 };
 
 const validateProvider = (name: string) => {
@@ -158,6 +159,7 @@ export async function getChatResponse({
   n,
   contextKey,
   oneKey,
+  intellinodeData,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
@@ -175,7 +177,7 @@ export async function getChatResponse({
     apiKey,
     name === 'google' ? 'gemini' : name,
     null,
-    ...(oneKey ? [{ oneKey }] : [])
+    ...(oneKey && intellinodeData ? [{ oneKey }] : [])
   );
   const input = getChatInput(name, model, systemMessage);
 

@@ -112,6 +112,7 @@ export default function Chat() {
     mutate(payload);
     input.current!.value = '';
   };
+  console.log(messages);
   return (
     <Container className='relative grid min-h-[calc(100vh-88px)] grid-rows-[1fr,min-content]'>
       <div className='py-10'>

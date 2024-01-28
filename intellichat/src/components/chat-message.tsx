@@ -24,7 +24,7 @@ export const ChatMessage = ({ role, content, last, references, id }: Props) => {
             <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal'>
               {content}
             </ReactMarkdown>
-            {last && references && (
+            {last && references && references.length > 0 && (
               <div className='flex gap-2'>
                 <Popover>
                   <PopoverTrigger className='mt-1 flex items-center gap-2 rounded-md border px-2 py-1 text-sm hover:border-primary hover:bg-primary'>
