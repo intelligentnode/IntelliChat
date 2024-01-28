@@ -9,4 +9,5 @@ export type ChatProvider =
   | 'replicate'
   | 'azure'
   | 'cohere'
-  | 'google';
+  | 'google'
+  | 'mistral';

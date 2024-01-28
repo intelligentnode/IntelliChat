@@ -8,6 +8,7 @@ export async function GET() {
   const CohereKey = getChatProviderKey('cohere');
   const GoogleKey = getChatProviderKey('google');
   const AzureKey = getChatProviderKey('azure');
+  const MistralKey = getChatProviderKey('mistral');
 
   return NextResponse.json({
     openai: !!OpenAIKey,
@@ -15,5 +16,6 @@ export async function GET() {
     cohere: !!CohereKey,
     google: !!GoogleKey,
     azure: !!AzureKey,
+    mistral: !!MistralKey,
   });
 }

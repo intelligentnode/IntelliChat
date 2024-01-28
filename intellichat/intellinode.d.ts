@@ -5,7 +5,8 @@ declare module 'intellinode' {
     | 'sagemaker'
     | 'azure'
     | 'gemini'
-    | 'cohere';
+    | 'cohere'
+    | 'mistral';
 
   class Chatbot {
     constructor(
@@ -64,6 +65,13 @@ declare module 'intellinode' {
   }
 
   class GeminiInput {
+    constructor(message: string, options?: { model?: string });
+
+    addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
+  }
+
+  class MistralInput {
     constructor(message: string, options?: { model?: string });
 
     addUserMessage(message: string): void;

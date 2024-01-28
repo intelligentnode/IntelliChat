@@ -37,12 +37,16 @@ export const azureValidator = createProviderValidator(AIProviders.azure).extend(
 );
 export type azureType = z.infer<typeof azureValidator>;
 
+export const mistralValidator = createProviderValidator(AIProviders.mistral);
+export type mistralType = z.infer<typeof mistralValidator>;
+
 export const ProvidersValidator = z.object({
   openai: openAIValidator.optional(),
   replicate: replicateValidator.optional(),
   cohere: cohereValidator.optional(),
   google: googleValidator.optional(),
   azure: azureValidator.optional(),
+  mistral: mistralValidator.optional(),
 });
 export type SupportedProvidersType = z.infer<typeof ProvidersValidator>;
 export type SupportedProvidersNamesType = keyof SupportedProvidersType;

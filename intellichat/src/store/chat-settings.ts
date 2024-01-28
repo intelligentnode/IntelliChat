@@ -47,6 +47,7 @@ const initialProviders: ChatSettingsState['providers'] = {
     resourceName: '',
     embeddingName: '',
   },
+  mistral: { name: 'mistral', model: 'mistral-tiny', apiKey: '' },
 };
 
 const initialState = {
