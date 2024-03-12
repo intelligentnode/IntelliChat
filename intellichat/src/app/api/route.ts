@@ -9,6 +9,7 @@ export async function GET() {
   const GoogleKey = getChatProviderKey('google');
   const AzureKey = getChatProviderKey('azure');
   const MistralKey = getChatProviderKey('mistral');
+  const anthropicKey = getChatProviderKey('anthropic');
 
   return NextResponse.json({
     openai: !!OpenAIKey,
@@ -17,5 +18,6 @@ export async function GET() {
     google: !!GoogleKey,
     azure: !!AzureKey,
     mistral: !!MistralKey,
+    anthropic: !!anthropicKey,
   });
 }

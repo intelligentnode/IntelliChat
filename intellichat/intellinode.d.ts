@@ -6,7 +6,8 @@ declare module 'intellinode' {
     | 'azure'
     | 'gemini'
     | 'cohere'
-    | 'mistral';
+    | 'mistral'
+    | 'anthropic';
 
   class Chatbot {
     constructor(
@@ -23,6 +24,7 @@ declare module 'intellinode' {
         | LLamaReplicateInput
         | CohereInput
         | GeminiInput
+        | AnthropicInput
     );
   }
 
@@ -92,6 +94,19 @@ declare module 'intellinode' {
   }
 
   class MistralInput {
+    constructor(
+      message: string,
+      options?: {
+        model?: string;
+        attachReference?: boolean;
+      }
+    );
+
+    addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
+  }
+
+  class AnthropicInput {
     constructor(
       message: string,
       options?: {
