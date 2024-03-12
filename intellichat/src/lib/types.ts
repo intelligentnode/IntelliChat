@@ -11,4 +11,5 @@ export type ChatProvider =
   | 'azure'
   | 'cohere'
   | 'google'
-  | 'mistral';
+  | 'mistral'
+  | 'anthropic';

@@ -6,6 +6,7 @@ import {
   GeminiInput,
   LLamaReplicateInput,
   MistralInput,
+  AnthropicInput,
   ProxyHelper,
 } from 'intellinode';
 import { ChatProvider } from './types';
@@ -17,10 +18,13 @@ import {
   googleType,
   googleValidator,
   mistralValidator,
+  mistralType,
   openAIType,
   openAIValidator,
   replicateType,
   replicateValidator,
+  anthropicType,
+  anthropicValidator,
 } from './validators';
 
 // We can use this function to get the default provider key if onekey is provided and starts with 'in'
@@ -40,6 +44,8 @@ export function getDefaultProviderKey(provider: ChatProvider, oneKey?: string) {
       return process.env.INTELLI_COHERE_API_KEY;
     case 'google':
       return process.env.INTELLI_GOOGLE_API_KEY;
+    case 'anthropic':
+        return process.env.INTELLI_Anthropic_API_KEY;
     default:
       return null;
   }
@@ -59,6 +65,8 @@ export function getChatProviderKey(provider: ChatProvider) {
       return process.env.GOOGLE_API_KEY;
     case 'mistral':
       return process.env.MISTRAL_API_KEY;
+    case 'anthropic':
+        return process.env.Anthropic_API_KEY;
     default:
       return null;
   }
@@ -126,7 +134,7 @@ type getChatResponseParams = {
     role: 'user' | 'assistant';
     content: string;
   }[];
-  provider?: openAIType | replicateType | cohereType | googleType;
+  provider?: openAIType | replicateType | cohereType | googleType | mistralType | anthropicType;
   withContext: boolean;
   n: number;
   contextKey?: string | null;
@@ -146,6 +154,8 @@ const validateProvider = (name: string) => {
       return googleValidator;
     case 'mistral':
       return mistralValidator;
+    case 'anthropic':
+      return anthropicValidator;
     default:
       throw new Error('provider is not supported');
   }
@@ -218,6 +228,8 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new GeminiInput(systemMessage, { model, attachReference: true });
     case 'mistral':
       return new MistralInput(systemMessage, { model, attachReference: true });
+    case 'anthropic':
+      return new AnthropicInput(systemMessage, { model, attachReference: true });
     default:
       throw new Error('provider is not supported');
   }

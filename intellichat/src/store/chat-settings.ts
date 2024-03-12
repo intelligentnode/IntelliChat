@@ -40,6 +40,7 @@ const initialProviders: ChatSettingsState['providers'] = {
     apiKey: '',
   },
   google: { name: 'google', model: 'gemini', apiKey: '' },
+  
   azure: {
     name: 'azure',
     model: '',
@@ -48,6 +49,7 @@ const initialProviders: ChatSettingsState['providers'] = {
     embeddingName: '',
   },
   mistral: { name: 'mistral', model: 'mistral-tiny', apiKey: '' },
+  anthropic: { name: 'anthropic', model: 'claude-3-sonnet-20240229', apiKey: '' },
 };
 
 const initialState = {
