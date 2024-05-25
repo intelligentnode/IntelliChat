@@ -2,7 +2,7 @@
 
 import { SupportedProvidersNamesType } from './validators';
 
-const OpenAIModels = ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview'] as const;
+const OpenAIModels = ['gpt-4o', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview'] as const;
 const ReplicateModels = [
   '70b-chat',
   '13b-chat',
