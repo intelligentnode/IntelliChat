@@ -79,7 +79,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
         },
       },
       ...values,
-      numberOfMessages: Number(values.numberOfMessages),
     };
     updateChatSettings(payload);
     close();
