@@ -126,6 +126,10 @@ export default function ChatSettings({ close }: { close: () => void }) {
               the number, the more context the AI will have to work with.
               This will determine the number of messages used to generate
               the context when the "Use Chat Context" option is enabled.`}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              form.setValue('numberOfMessages', value);
+            }}
           />
           <FormSelectField
             control={form.control}

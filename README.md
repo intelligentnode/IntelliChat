@@ -19,7 +19,7 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 ## Features
 
 - Select your preferred AI Provider and model from the UI.
-  - **OpenAI ChatGPT**: gpt-4, gpt-3.5-turbo.
+  - **OpenAI ChatGPT**: gpt-4, gpt-3.5-turbo, gpt-4o-mini.
   - **Google Gemini**.
   - **Azure Openai**.
   - **Cohere Coral**.
