@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { cn } from '@/lib/utils';
 import { Message } from '@/lib/types';
@@ -8,9 +7,17 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 type Props = Message & {
   last?: boolean;
+  isStreaming?: boolean;
 };
 
-export const ChatMessage = ({ role, content, last, references, id }: Props) => {
+export const ChatMessage = ({ 
+  role, 
+  content, 
+  last, 
+  references, 
+  id, 
+  isStreaming 
+}: Props) => {
   const isUser = role === 'user';
 
   return (
@@ -24,7 +31,7 @@ export const ChatMessage = ({ role, content, last, references, id }: Props) => {
             <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal'>
               {content}
             </ReactMarkdown>
-            {last && references && references.length > 0 && (
+            {last && references && references.length > 0 && !isStreaming && (
               <div className='flex gap-2'>
                 <Popover>
                   <PopoverTrigger className='mt-1 flex items-center gap-2 rounded-md border px-2 py-1 text-sm hover:border-primary hover:bg-primary'>
@@ -38,6 +45,15 @@ export const ChatMessage = ({ role, content, last, references, id }: Props) => {
                     ))}
                   </PopoverContent>
                 </Popover>
+              </div>
+            )}
+            {isStreaming && (
+              <div className='flex gap-2'>
+                <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
+
+                <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>      
+                
+                <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
               </div>
             )}
           </div>

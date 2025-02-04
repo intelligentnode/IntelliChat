@@ -26,6 +26,15 @@ declare module 'intellinode' {
         | GeminiInput
         | AnthropicInput
     );
+
+    stream(
+      modelInput?:
+        | ChatGPTInput
+        | LLamaReplicateInput
+        | CohereInput
+        | GeminiInput
+        | AnthropicInput
+    );
   }
 
   class ChatGPTInput {
