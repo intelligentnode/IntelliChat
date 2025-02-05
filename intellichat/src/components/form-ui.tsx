@@ -135,7 +135,6 @@ export function FormSwitchField({
   label,
   withTooltip,
   tooltipText,
-  disabled,
   onChange,
 }: {
   control: any;
@@ -143,7 +142,6 @@ export function FormSwitchField({
   label: string;
   withTooltip?: boolean;
   tooltipText?: string;
-  disabled?: boolean;
   onChange?: (e: any) => void;
 }) {
   return (
@@ -151,14 +149,12 @@ export function FormSwitchField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex items-center justify-between gap-2 space-y-0">
-          <div className="flex items-center gap-2">
+        <FormItem className='flex items-center justify-between gap-2 space-y-0'>
+          <div className='flex items-center gap-2'>
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Switch
-                disabled={disabled}
-                // Force the switch to show off when disabled is true
-                checked={!disabled && field.value}
+                checked={field.value}
                 onCheckedChange={(e) => {
                   field.onChange(e);
                   if (onChange) onChange(e);

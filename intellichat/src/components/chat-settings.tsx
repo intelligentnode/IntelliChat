@@ -200,7 +200,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
               control={form.control}
               name='stream'
               label='Stream'
-              disabled={watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))}
               withTooltip={true}
               tooltipText={
                 watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))
