@@ -37,7 +37,7 @@ export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
           />
           <Button
             size='icon'
-            className='absolute right-4 top-3 h-11 w-16 p-0'
+            className='absolute right-4 top-3 h-11 w-16 p-0 disabled:bg-sky-700'
             onClick={onSubmit}
             variant='default'
             disabled={isLoading}

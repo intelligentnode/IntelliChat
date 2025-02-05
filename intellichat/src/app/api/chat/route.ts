@@ -6,6 +6,7 @@ import {
   getChatResponse,
   getDefaultProviderKey,
 } from '@/lib/intellinode';
+import { serializeError } from '@/lib/helpers';
 
 const defaultSystemMessage =
   'You are a helpful assistant. Format response in Markdown where needed.';
@@ -13,7 +14,7 @@ const defaultProvider = 'openai';
 
 export async function POST(req: Request) {
   const json = await req.json();
-  const parsedJson = chatbotValidator.safeParse(json);
+  const parsedJson : any = chatbotValidator.safeParse(json);
 
   if (!parsedJson.success) {
     const { error } = parsedJson;
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     withContext,
     intellinodeData,
     oneKey,
+    stream: streamResponse,
   } = parsedJson.data;
 
   const key =
@@ -71,23 +73,78 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ response: responses });
     } else if (chatProviderProps && chatProviderProps?.name !== 'azure') {
-      const responses = await getChatResponse({
-        provider: { ...chatProviderProps, apiKey: key },
-        systemMessage: chatSystemMessage,
-        withContext,
-        contextKey,
-        messages,
-        n,
-        oneKey: intellinodeData ? oneKey : undefined,
-        intellinodeData,
-      });
-      return NextResponse.json({
-        response: responses.result,
-        references: responses.references,
-      });
-    }
+      const shouldStream = (chatProviderProps.name === 'openai' || chatProviderProps.name === 'cohere') && req.headers.get('Accept') === 'text/event-stream';
+
+      if (shouldStream) {
+        const encoder = new TextEncoder();
+        const stream = new TransformStream();
+        const writer = stream.writable.getWriter();
+
+        // Start the streaming response
+        getChatResponse({
+          provider: { ...chatProviderProps, apiKey: key },
+          systemMessage: chatSystemMessage,
+          withContext,
+          contextKey,
+          messages,
+          n,
+          stream : streamResponse,
+          oneKey: intellinodeData ? oneKey : undefined,
+          intellinodeData,
+          onChunk: async (chunk: string) => {
+            try {
+              // Ensure proper SSE format
+              const data = `${chunk}`;
+              await writer.write(encoder.encode(data));
+            } catch (error) {
+              console.error('Error writing chunk:', error);
+              throw error;
+            }
+          },
+        }).then(async () => {
+          // Send end message and close the stream
+          // await writer.write(encoder.encode('[DONE]\n\n'));
+          await writer.close();
+        }).catch(async (error) => {
+          console.error('Streaming error:', error);
+          // Safely serialize the error before sending to client
+          try {
+            const safeError = serializeError(error);
+            await writer.write(encoder.encode(`Something went wrong, Enable to generate response`));
+          } finally {
+            await writer.close();
+          }
+        });;
+
+        return new Response(stream.readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      } else {
+        // Non-streaming response remains the same
+        const responses = await getChatResponse({
+          provider: { ...chatProviderProps, apiKey: key },
+          systemMessage: chatSystemMessage,
+          withContext,
+          contextKey,
+          messages,
+          stream : false,
+          n,
+          oneKey: intellinodeData ? oneKey : undefined,
+          intellinodeData,
+        });
+
+        return NextResponse.json({
+          response: responses.result,
+          references: responses.references,
+        });
+      }
+    } 
   } catch (e) {
-    console.log(e);
+    console.error('Error:', e);
     return NextResponse.json(
       {
         error: 'invalid api key or provider',

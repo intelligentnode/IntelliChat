@@ -3,6 +3,7 @@ export type Message = {
   content: string;
   role: 'user' | 'assistant';
   references?: string[] | null;
+  isStreaming?: boolean;
 };
 
 export type ChatProvider =

@@ -136,10 +136,12 @@ type getChatResponseParams = {
   }[];
   provider?: openAIType | replicateType | cohereType | googleType | mistralType | anthropicType;
   withContext: boolean;
+  stream?: boolean;
   n: number;
   contextKey?: string | null;
   oneKey?: string;
   intellinodeData?: boolean;
+  onChunk?: (chunk: string) => Promise<void>;
 };
 
 const validateProvider = (name: string) => {
@@ -166,10 +168,12 @@ export async function getChatResponse({
   messages,
   provider,
   withContext,
+  stream,
   n,
   contextKey,
   oneKey,
   intellinodeData,
+  onChunk,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
@@ -177,8 +181,7 @@ export async function getChatResponse({
   const parsed = validateProvider(provider.name).safeParse(provider);
 
   if (!parsed.success) {
-    const { error } = parsed;
-    throw new Error(error.message);
+    throw new Error(parsed.error.message);
   }
 
   const { apiKey, model, name } = parsed.data;
@@ -189,6 +192,7 @@ export async function getChatResponse({
     null,
     ...(oneKey && intellinodeData ? [{ oneKey }] : [])
   );
+
   const input = getChatInput(name, model, systemMessage);
 
   if (withContext) {
@@ -205,11 +209,36 @@ export async function getChatResponse({
   } else {
     addMessages(input, messages);
   }
-  const responses: {
-    result: string[];
-    references?: string;
-  } = await chatbot.chat(input);
-  return responses;
+
+  if ((name === 'openai' || name === 'cohere') && stream && onChunk) {
+    const streamData = await chatbot.stream(input);
+    let fullResponse = '';
+
+    try {
+      for await (const chunk of streamData) {
+        fullResponse += chunk;
+        // If Response is available as a string
+        const textChunk = typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+        
+        await onChunk(textChunk);
+      }
+
+      console.log('fullResponse', fullResponse);
+
+      return {
+        result: [fullResponse],
+        references: null
+      };
+    } catch (error) {
+      console.error('Streaming error:', error);
+      throw error;
+    }
+  } else {
+    // Handle non-streaming response
+    const responses = await chatbot.chat(input);
+    console.log("responses", responses);
+    return responses;
+  }
 }
 
 function getChatInput(provider: string, model: string, systemMessage: string) {
