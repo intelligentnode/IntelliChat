@@ -156,6 +156,7 @@ export function FormSwitchField({
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Switch
+                disabled={disabled}
                 checked={field.value}
                 onCheckedChange={(e) => {
                   field.onChange(e);
