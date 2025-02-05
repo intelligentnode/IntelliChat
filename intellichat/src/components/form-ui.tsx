@@ -135,6 +135,7 @@ export function FormSwitchField({
   label,
   withTooltip,
   tooltipText,
+  disabled,
   onChange,
 }: {
   control: any;
@@ -142,6 +143,7 @@ export function FormSwitchField({
   label: string;
   withTooltip?: boolean;
   tooltipText?: string;
+  disabled?: boolean;
   onChange?: (e: any) => void;
 }) {
   return (

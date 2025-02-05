@@ -198,10 +198,15 @@ export default function ChatSettings({ close }: { close: () => void }) {
           {(watchProviderName === 'openai' || watchProviderName === 'cohere') && (
             <FormSwitchField
               control={form.control}
+              disabled={watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))}
               name='stream'
               label='Stream'
               withTooltip={true}
-              tooltipText={`When enabled, the chatbot will stream its responses in real-time, sending partial messages as they are generated. This allows for a more dynamic and responsive experience, reducing wait times by displaying content progressively instead of waiting for the full response to be completed.`}
+              tooltipText={
+                watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))
+                  ? 'Streaming is not supported for o1 model.'
+                  : 'When enabled, the chatbot will stream its responses in real-time...'
+              }
             />
           )}
 
