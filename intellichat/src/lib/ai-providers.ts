@@ -2,7 +2,7 @@
 
 import { SupportedProvidersNamesType } from './validators';
 
-const OpenAIModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo-preview'] as const;
+const OpenAIModels = ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3-mini', 'gpt-4', 'gpt-3.5-turbo'] as const;
 const ReplicateModels = [
   '70b-chat',
   '13b-chat',
@@ -10,7 +10,7 @@ const ReplicateModels = [
   '34b-python',
   '13b-code-instruct',
 ] as const;
-const CohereModels = ['command'] as const;
+const CohereModels = ['command-r-plus', 'command-r', 'command'] as const;
 const GoogleModels = ['gemini'] as const;
 const MistralModels = ['mistral-tiny', 'mistral-medium'] as const;
 const AnthropicModels = ['claude-3-sonnet-20240229', 'claude-3-opus-20240229'] as const;
