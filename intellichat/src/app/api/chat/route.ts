@@ -75,11 +75,6 @@ export async function POST(req: Request) {
     } else if (chatProviderProps && chatProviderProps?.name !== 'azure') {
       let shouldStream = (chatProviderProps.name === 'openai' || chatProviderProps.name === 'cohere') && req.headers.get('Accept') === 'text/event-stream';
 
-      // disable streaming for not supported models
-      if (chatProviderProps.name === 'openai' && ['o1', 'o1-mini'].includes(chatProviderProps.model)) {
-        shouldStream = false;
-      }
-
       if (shouldStream) {
         const encoder = new TextEncoder();
         const stream = new TransformStream();
