@@ -91,9 +91,7 @@ export default function Chat() {
     mutationFn: async (payload: PostMessagePayload) => {
       const settings = getSettings();
       const isOpenAIOrCohere = settings.provider === 'openai' || settings.provider === 'cohere';
-      const unsupportedModel = settings.provider === 'openai' && ['o1', 'o1-mini'].includes(settings.providerModel);
-      const isStreaming = isOpenAIOrCohere && settings.stream && !unsupportedModel;
-      
+      const isStreaming = isOpenAIOrCohere && settings.stream;
       setIsStreaming(isStreaming);
 
       const res = await fetch('/api/chat', {
