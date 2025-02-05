@@ -135,6 +135,7 @@ export function FormSwitchField({
   label,
   withTooltip,
   tooltipText,
+  disabled,
   onChange,
 }: {
   control: any;
@@ -142,6 +143,7 @@ export function FormSwitchField({
   label: string;
   withTooltip?: boolean;
   tooltipText?: string;
+  disabled?: boolean;
   onChange?: (e: any) => void;
 }) {
   return (
@@ -154,7 +156,8 @@ export function FormSwitchField({
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Switch
-                checked={field.value}
+                disabled={disabled}
+                checked={!disabled && field.value}
                 onCheckedChange={(e) => {
                   field.onChange(e);
                   if (onChange) onChange(e);
