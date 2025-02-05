@@ -110,7 +110,20 @@ export async function POST(req: Request) {
           // Safely serialize the error before sending to client
           try {
             const safeError = serializeError(error);
-            await writer.write(encoder.encode(`Something went wrong, Enable to generate response`));
+            if (
+              chatProviderProps?.name === 'openai' &&
+              ['o1', 'o1-mini'].includes(chatProviderProps.model)
+            ) {
+              await writer.write(
+                encoder.encode(
+                  `Model "${chatProviderProps.model}" does not support streaming. Please turn off streaming.`
+                )
+              );
+            } else {
+              await writer.write(
+                encoder.encode(`Something went wrong; unable to generate a response.`)
+              );
+            }
           } finally {
             await writer.close();
           }
