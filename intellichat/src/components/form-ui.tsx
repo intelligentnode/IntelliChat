@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
+import React from 'react';
 import { Input, InputProps } from '@/components/ui/input';
 import FieldTooltip from './field-tooltip';
 import { cn } from '@/lib/utils';
@@ -151,22 +151,30 @@ export function FormSwitchField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className='flex items-center justify-between gap-2 space-y-0'>
-          <div className='flex items-center gap-2'>
-            <FormLabel>{label}</FormLabel>
-            <FormControl>
-              <Switch
-                disabled={disabled}
-                checked={field.value}
-                onCheckedChange={(e) => {
-                  field.onChange(e);
-                  if (onChange) onChange(e);
-                }}
-              />
-            </FormControl>
-          </div>
-          {withTooltip && <FieldTooltip>{tooltipText}</FieldTooltip>}
-        </FormItem>
+        React.useEffect(() => {
+          if (disabled && field.value !== false) {
+            field.onChange(false);
+          }
+        }, [disabled, field.value]);
+
+        return (
+          <FormItem className='flex items-center justify-between gap-2 space-y-0'>
+            <div className='flex items-center gap-2'>
+              <FormLabel>{label}</FormLabel>
+              <FormControl>
+                <Switch
+                  disabled={disabled}
+                  checked={field.value}
+                  onCheckedChange={(e) => {
+                    field.onChange(e);
+                    if (onChange) onChange(e);
+                  }}
+                />
+              </FormControl>
+            </div>
+            {withTooltip && <FieldTooltip>{tooltipText}</FieldTooltip>}
+          </FormItem>
+        );
       )}
     />
   );
