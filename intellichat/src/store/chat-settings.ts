@@ -16,6 +16,7 @@ type ChatSettingsState = {
   numberOfMessages: number;
   providers: SupportedProvidersType;
   withContext: boolean;
+  stream : boolean;
   intellinodeData: boolean;
   oneKey: string;
   envKeys: Record<SupportedProvidersNamesType, boolean>;
@@ -33,7 +34,7 @@ type ChatSettingsState = {
 
 const initialProviders: ChatSettingsState['providers'] = {
   cohere: { name: 'cohere', model: 'command', apiKey: '' },
-  openai: { name: 'openai', model: 'gpt-4o-mini', apiKey: '' },
+  openai: { name: 'openai', model: 'gpt-4o', apiKey: '' },
   replicate: {
     name: 'replicate',
     model: '70b-chat',
@@ -56,6 +57,7 @@ const initialState = {
   intellinodeData: false,
   oneKey: '',
   withContext: false,
+  stream: false,
   systemMessage: '',
   provider: 'openai' as SupportedProvidersNamesType,
   numberOfMessages: 4,
@@ -85,6 +87,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           n: get().numberOfMessages,
           withContext: get().withContext,
           oneKey: get().oneKey,
+          stream :get().stream,
           intellinodeData: get().intellinodeData,
         };
         return settings;

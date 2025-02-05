@@ -34,6 +34,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const provider = useChatSettings((s) => s.provider);
   const providers = useChatSettings((s) => s.providers);
   const withContext = useChatSettings((s) => s.withContext);
+  const stream = useChatSettings((s) => s.stream);
   const intellinodeData = useChatSettings((s) => s.intellinodeData);
   const oneKey = useChatSettings((s) => s.oneKey);
   const envKeys = useChatSettings((s) => s.envKeys);
@@ -49,6 +50,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     providerModel: getModel(),
     // The API keys for each provider
     providers,
+    stream,
     withContext,
     intellinodeData,
     oneKey,
@@ -64,13 +66,18 @@ export default function ChatSettings({ close }: { close: () => void }) {
     providerName,
     providerModel,
     withContext,
+    stream,
     providers,
     ...values
   }: z.infer<typeof formSchema>) {
+
+    console.log("values", values);
+    
     const provider = providerName;
     const payload = {
       provider,
       withContext: provider !== 'openai' ? false : withContext,
+      stream: provider === 'openai' || provider === 'cohere' ? stream : false,
       providers: {
         ...providers,
         [provider]: {
@@ -182,11 +189,22 @@ export default function ChatSettings({ close }: { close: () => void }) {
                 label={`${watchProviderName
                   .slice(0, 1)
                   .toUpperCase()}${watchProviderName.slice(1)} API Key`}
-                provider={watchProviderName}
+                provider={watchProviderName as "openai" | "replicate" | "cohere" | "google"}
                 withContext={form.watch('withContext')}
               />
             </>
           )}
+
+          {(watchProviderName === 'openai' || watchProviderName === 'cohere') && (
+            <FormSwitchField
+              control={form.control}
+              name='stream'
+              label='Stream'
+              withTooltip={true}
+              tooltipText={`When enabled, the chatbot will stream its responses in real-time, sending partial messages as they are generated. This allows for a more dynamic and responsive experience, reducing wait times by displaying content progressively instead of waiting for the full response to be completed.`}
+            />
+          )}
+
           {watchProviderName === 'openai' && (
             <FormSwitchField
               control={form.control}

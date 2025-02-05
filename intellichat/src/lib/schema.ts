@@ -9,6 +9,7 @@ export const formSchema = z
     providerModel: z.string().optional(),
     providers: ProvidersValidator,
     withContext: z.boolean(),
+    stream: z.boolean(),
     intellinodeData: z.boolean(),
     oneKey: z.string().optional(),
     envKeys: z.record(z.boolean()),
