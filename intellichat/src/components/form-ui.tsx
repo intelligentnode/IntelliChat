@@ -151,12 +151,13 @@ export function FormSwitchField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className='flex items-center justify-between gap-2 space-y-0'>
-          <div className='flex items-center gap-2'>
+        <FormItem className="flex items-center justify-between gap-2 space-y-0">
+          <div className="flex items-center gap-2">
             <FormLabel>{label}</FormLabel>
             <FormControl>
               <Switch
                 disabled={disabled}
+                // Force the switch to show off when disabled is true
                 checked={!disabled && field.value}
                 onCheckedChange={(e) => {
                   field.onChange(e);
