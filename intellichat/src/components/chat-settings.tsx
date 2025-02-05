@@ -198,7 +198,6 @@ export default function ChatSettings({ close }: { close: () => void }) {
           {(watchProviderName === 'openai' || watchProviderName === 'cohere') && (
             <FormSwitchField
               control={form.control}
-              disabled={watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))}
               name='stream'
               label='Stream'
               withTooltip={true}
