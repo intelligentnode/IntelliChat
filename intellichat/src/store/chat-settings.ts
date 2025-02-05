@@ -34,7 +34,7 @@ type ChatSettingsState = {
 
 const initialProviders: ChatSettingsState['providers'] = {
   cohere: { name: 'cohere', model: 'command', apiKey: '' },
-  openai: { name: 'openai', model: 'gpt-4o-mini', apiKey: '' },
+  openai: { name: 'openai', model: 'gpt-4o', apiKey: '' },
   replicate: {
     name: 'replicate',
     model: '70b-chat',

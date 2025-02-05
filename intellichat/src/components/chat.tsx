@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { ChatPanel } from './chat-panel';
 import { ChatPrompt } from './chat-prompt';
@@ -22,6 +22,10 @@ export default function Chat() {
   const setMessage = useChatSettings((s) => s.setMessage);
   const setOneKey = useChatSettings((s) => s.setOneKey);
   const [streamingMessage, setStreamingMessage] = React.useState<Message | null>(null);
+  const [isStreaming , setIsStreaming] = useState(false);
+  // const [chatPanelMessage, setChatPanelMessage] = useState(messages);
+
+
 
   useEffect(() => {
     const ok = oneKey ?? getSettings().oneKey;
@@ -31,48 +35,64 @@ export default function Chat() {
   const { toast } = useToast();
   const input = React.useRef<HTMLTextAreaElement>(null);
 
-  // Helper function to handle streaming response
   const handleStream = async (response: Response, messageId: string) => {
     const reader = response.body?.getReader();
     if (!reader) return;
-
+  
     const decoder = new TextDecoder();
     let accumulatedContent = '';
-
+    let frameId: number | null = null;
+  
+    const updateMessage = () => {
+      setStreamingMessage({
+        id: messageId,
+        content: accumulatedContent,
+        role: 'assistant',
+      });
+      frameId = null;
+    };
+  
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
-        const chunk = decoder.decode(value);
-        accumulatedContent += chunk;
-
-        // Update the streaming message
-        setStreamingMessage({
-          id: messageId,
-          content: accumulatedContent,
-          role: 'assistant',
-        });
+  
+        accumulatedContent += decoder.decode(value);
+  
+        // Reduce re-renders: Schedule the update if not already scheduled
+        if (!frameId) {
+          frameId = requestAnimationFrame(updateMessage);
+        }
       }
 
-      // Final message update
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+        updateMessage(); // Final update before clearing streamingMessage
+      }
+      
+      setIsStreaming(false);
+
+      // Final update once stream ends
       setMessage({
         id: messageId,
         content: accumulatedContent,
         role: 'assistant',
       });
+
       setStreamingMessage(null);
     } catch (error) {
       console.error('Stream reading error:', error);
       reader.cancel();
     }
   };
+  
 
   const { mutate, isLoading } = useMutation({
     mutationFn: async (payload: PostMessagePayload) => {
       const settings = getSettings();
       const isOpenAIOrCohere = settings.provider === 'openai' || settings.provider === 'cohere';
       const isStreaming = isOpenAIOrCohere && settings.stream;
+      setIsStreaming(isStreaming);
 
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -104,6 +124,7 @@ export default function Chat() {
       }
     },
     onSuccess: (data) => {
+
       if (!data) return; // Skip for streaming responses
       
       const { response, references } = data;
@@ -179,10 +200,11 @@ export default function Chat() {
       <div className='py-10'>
         <ChatPanel 
           chat={messages} 
-          streamingMessage={streamingMessage}  // Pass streaming message to ChatPanel
+          streamingMessage={streamingMessage}
+          isStreaming={isStreaming}  // Pass streaming message to ChatPanel
         />
       </div>
-      <ChatPrompt ref={input} isLoading={isLoading} onSubmit={onSubmit} />
+      <ChatPrompt ref={input} isLoading={isStreaming || isLoading} onSubmit={onSubmit} />
     </Container>
   );
 }
