@@ -104,6 +104,7 @@ export async function POST(req: Request) {
           stream : streamResponse,
           oneKey: intellinodeData ? oneKey : undefined,
           intellinodeData,
+          intelliBase: intellinodeData ? process.env.CUSTOM_INTELLIBASE_URL : undefined,
           onChunk: async (chunk: string) => {
             try {
               // Ensure proper SSE format

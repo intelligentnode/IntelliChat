@@ -16,6 +16,7 @@ declare module 'intellinode' {
       customProxy?: ProxyHelper | null,
       options?: {
         oneKey?: string;
+        intelliBase?: string;
       }
     );
     chat(
