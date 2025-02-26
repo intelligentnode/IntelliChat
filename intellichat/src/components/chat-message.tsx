@@ -28,7 +28,7 @@ export const ChatMessage = ({
           <>{content}</>
         ) : (
           <div>
-            <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal break-words'>
+            <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal break-all'>
               {content}
             </ReactMarkdown>
             {last && references && references.length > 0 && !isStreaming && (
