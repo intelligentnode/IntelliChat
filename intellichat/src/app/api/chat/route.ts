@@ -12,6 +12,19 @@ const defaultSystemMessage =
   'You are a helpful assistant. Format response in Markdown where needed.';
 const defaultProvider = 'openai';
 
+function extractJsonFromString(str: string): any[] {
+  try {
+    const jsonStart = str.indexOf('{');
+    if (jsonStart !== -1) {
+      const jsonPart = str.slice(jsonStart);
+      return [JSON.parse(jsonPart)];
+    }
+  } catch {
+    // Ignore JSON parsing errors
+  }
+  return [];
+}
+
 export async function POST(req: Request) {
   const json = await req.json();
   const parsedJson : any = chatbotValidator.safeParse(json);
@@ -110,20 +123,14 @@ export async function POST(req: Request) {
           // Safely serialize the error before sending to client
           try {
             const safeError = serializeError(error);
-            if (
-              chatProviderProps?.name === 'openai' &&
-              ['o1', 'o1-mini'].includes(chatProviderProps.model)
-            ) {
-              await writer.write(
-                encoder.encode(
-                  `Model "${chatProviderProps.model}" does not support streaming. Please turn off streaming.`
-                )
-              );
-            } else {
-              await writer.write(
-                encoder.encode(`Something went wrong; unable to generate a response.`)
-              );
+            let errMsg = (safeError as any).error?.message || safeError.message || '';
+            const extracted = extractJsonFromString(errMsg);
+            if (extracted.length && extracted[0]?.error?.message) {
+              errMsg = extracted[0].error.message;
             }
+            await writer.write(
+              encoder.encode(errMsg || 'Something went wrong; unable to generate a response.')
+            );
           } finally {
             await writer.close();
           }
@@ -158,12 +165,18 @@ export async function POST(req: Request) {
     } 
   } catch (e) {
     console.error('Error:', e);
-    return NextResponse.json(
-      {
-        error: 'invalid api key or provider',
-      },
-      { status: 400 }
-    );
+    const defaultErrorMsg = 'invalid api key or provider';
+    try {
+      const safeError = serializeError(e);
+      let errMsg = (safeError as any).error?.message || safeError.message || '';
+      const extracted = extractJsonFromString(errMsg);
+      if (extracted.length && extracted[0]?.error?.message) {
+        errMsg = extracted[0].error.message;
+      }
+      return NextResponse.json({ error: errMsg || defaultErrorMsg }, { status: 400 });
+    } catch {
+      return NextResponse.json({ error: defaultErrorMsg }, { status: 400 });
+    }
   }
 }
 
