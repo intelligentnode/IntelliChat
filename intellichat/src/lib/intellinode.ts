@@ -142,6 +142,7 @@ type getChatResponseParams = {
   oneKey?: string;
   intellinodeData?: boolean;
   onChunk?: (chunk: string) => Promise<void>;
+  intelliBase?: string;
 };
 
 const validateProvider = (name: string) => {
@@ -174,6 +175,7 @@ export async function getChatResponse({
   oneKey,
   intellinodeData,
   onChunk,
+  intelliBase,
 }: getChatResponseParams) {
   if (!provider) {
     throw new Error('provider is required');
@@ -190,7 +192,7 @@ export async function getChatResponse({
     apiKey,
     name === 'google' ? 'gemini' : name,
     null,
-    ...(oneKey && intellinodeData ? [{ oneKey }] : [])
+    ...(oneKey && intellinodeData ? [{ oneKey, intelliBase }] : [])
   );
 
   const input = getChatInput(name, model, systemMessage);
