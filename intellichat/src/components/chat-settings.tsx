@@ -202,9 +202,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
               label='Stream'
               withTooltip={true}
               tooltipText={
-                watchProviderName === 'openai' && ['o1', 'o1-mini'].includes(form.watch('providerModel'))
-                  ? 'Real-time Streaming is not supported for o1 model.'
-                  : 'When enabled, the chatbot will stream its responses in real-time...'
+                'When enabled, the chatbot will stream its responses in real-time...'
               }
             />
           )}
