@@ -132,3 +132,4 @@ dist
 # custom
 */.idea/*
 .idea/*
+intellichat/instructions.txt
