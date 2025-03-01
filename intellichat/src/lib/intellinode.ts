@@ -103,11 +103,11 @@ export async function getAzureChatResponse({
   const proxy = createProxy(resourceName);
 
   const chatbot = new Chatbot(
-    apiKey,
-    'openai',
-    proxy,
-    ...(oneKey ? [{ oneKey }] : [])
-  );
+      apiKey,
+      'openai',
+      proxy,
+      ...(oneKey ? [{ oneKey, intelliBase: process.env.CUSTOM_INTELLIBASE_URL }] : [])
+    );
 
   const input = getChatInput(name, model, systemMessage);
 
@@ -187,13 +187,13 @@ export async function getChatResponse({
   }
 
   const { apiKey, model, name } = parsed.data;
-
   const chatbot = new Chatbot(
-    apiKey,
-    name === 'google' ? 'gemini' : name,
-    null,
-    ...(oneKey && intellinodeData ? [{ oneKey, intelliBase }] : [])
-  );
+      apiKey,
+      name === 'google' ? 'gemini' : name,
+      null,
+      ...(oneKey && intellinodeData ? [{ oneKey, intelliBase: intelliBase || process.env.CUSTOM_INTELLIBASE_URL }] : [])
+    );
+
 
   const input = getChatInput(name, model, systemMessage);
 
