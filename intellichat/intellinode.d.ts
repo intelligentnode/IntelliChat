@@ -7,7 +7,8 @@ declare module 'intellinode' {
     | 'gemini'
     | 'cohere'
     | 'mistral'
-    | 'anthropic';
+    | 'anthropic'
+    | 'vllm';
 
   class Chatbot {
     constructor(
@@ -125,6 +126,21 @@ declare module 'intellinode' {
       }
     );
 
+    addUserMessage(message: string): void;
+    addAssistantMessage(message: string): void;
+  }
+
+  class VLLMInput {
+    constructor(
+      systemMessage: string,
+      options?: {
+        model?: string;
+        // e.g. maxTokens, temperature, attachReference, etc.
+        maxTokens?: number;
+        temperature?: number;
+        attachReference?: boolean;
+      }
+    );
     addUserMessage(message: string): void;
     addAssistantMessage(message: string): void;
   }

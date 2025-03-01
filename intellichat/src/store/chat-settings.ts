@@ -51,6 +51,12 @@ const initialProviders: ChatSettingsState['providers'] = {
   },
   mistral: { name: 'mistral', model: 'mistral-tiny', apiKey: '' },
   anthropic: { name: 'anthropic', model: 'claude-3-sonnet-20240229', apiKey: '' },
+  vllm: {
+    name: 'vllm',
+    model: '',
+    baseUrl: '',
+    apiKey: '',
+  },
 };
 
 const initialState = {

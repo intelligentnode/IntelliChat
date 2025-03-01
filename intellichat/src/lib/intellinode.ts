@@ -8,6 +8,8 @@ import {
   MistralInput,
   AnthropicInput,
   ProxyHelper,
+  VLLMInput,
+  SupportedChatModels,
 } from 'intellinode';
 import { ChatProvider } from './types';
 import {
@@ -25,6 +27,7 @@ import {
   replicateValidator,
   anthropicType,
   anthropicValidator,
+  vllmValidator
 } from './validators';
 
 // We can use this function to get the default provider key if onekey is provided and starts with 'in'
@@ -67,6 +70,8 @@ export function getChatProviderKey(provider: ChatProvider) {
       return process.env.MISTRAL_API_KEY;
     case 'anthropic':
         return process.env.Anthropic_API_KEY;
+    case 'vllm':
+      return null;
     default:
       return null;
   }
@@ -159,6 +164,8 @@ const validateProvider = (name: string) => {
       return mistralValidator;
     case 'anthropic':
       return anthropicValidator;
+    case 'vllm':
+      return vllmValidator;
     default:
       throw new Error('provider is not supported');
   }
@@ -186,12 +193,15 @@ export async function getChatResponse({
     throw new Error(parsed.error.message);
   }
 
-  const { apiKey, model, name } = parsed.data;
+  const { apiKey, model, name, baseUrl } = parsed.data;
+  const finalApiKey = name === 'vllm' ? "" : apiKey;
   const chatbot = new Chatbot(
-      apiKey,
+      finalApiKey,
       name === 'google' ? 'gemini' : name,
       null,
-      ...(oneKey && intellinodeData ? [{ oneKey, intelliBase: intelliBase || process.env.CUSTOM_INTELLIBASE_URL }] : [])
+      oneKey && intellinodeData
+        ? { baseUrl, oneKey, intelliBase: intelliBase || process.env.CUSTOM_INTELLIBASE_URL }
+        : { baseUrl }
     );
 
 
@@ -261,6 +271,8 @@ function getChatInput(provider: string, model: string, systemMessage: string) {
       return new MistralInput(systemMessage, { model, attachReference: true });
     case 'anthropic':
       return new AnthropicInput(systemMessage, { model, attachReference: true });
+    case 'vllm':
+      return new VLLMInput(systemMessage, { model, attachReference: true, });
     default:
       throw new Error('provider is not supported');
   }

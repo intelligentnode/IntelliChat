@@ -16,6 +16,7 @@ export const formSchema = z
   })
   .superRefine((data, ctx) => {
     const name = data.providerName;
+    if (name === 'vllm') return;
     const keyValue = data.providers[name]?.apiKey;
     const envKey = data.envKeys[name];
     const keyExists = keyValue || envKey;

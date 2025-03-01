@@ -14,6 +14,7 @@ const CohereModels = ['command-r-plus', 'command-r', 'command'] as const;
 const GoogleModels = ['gemini'] as const;
 const MistralModels = ['mistral-tiny', 'mistral-medium'] as const;
 const AnthropicModels = ['claude-3-sonnet-20240229', 'claude-3-opus-20240229'] as const;
+const VLLMModels = [] as const;
 
 export const AIProviders = {
   openai: {
@@ -44,6 +45,9 @@ export const AIProviders = {
   // and the model names are entered manually instead of being a list
   azure: {
     name: 'azure' as const,
+  },
+  vllm: {
+    name: 'vllm' as const
   },
 };
 

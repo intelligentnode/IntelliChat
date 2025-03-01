@@ -43,6 +43,16 @@ export type mistralType = z.infer<typeof mistralValidator>;
 export const anthropicValidator = createProviderValidator(AIProviders.anthropic);
 export type anthropicType = z.infer<typeof anthropicValidator>;
 
+export const vllmValidator = z.object({
+  name: z.literal('vllm'),
+  model: z.string().min(1, { message: "Model is required" }),
+  apiKey: z.preprocess(
+    (val) => (val === null ? undefined : val),
+    z.string().optional().default("")
+  ),
+  baseUrl: z.string().min(1, { message: "Base URL is required" }),
+});
+
 export const ProvidersValidator = z.object({
   openai: openAIValidator.optional(),
   replicate: replicateValidator.optional(),
@@ -50,8 +60,12 @@ export const ProvidersValidator = z.object({
   google: googleValidator.optional(),
   azure: azureValidator.optional(),
   mistral: mistralValidator.optional(),
-  anthropic: anthropicValidator.optional()
+  anthropic: anthropicValidator.optional(),
+  vllm: vllmValidator.optional(),
 });
+
+export type vllmType = z.infer<typeof vllmValidator>;
+
 export type SupportedProvidersType = z.infer<typeof ProvidersValidator>;
 export type SupportedProvidersNamesType = keyof SupportedProvidersType;
 
