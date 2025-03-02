@@ -46,14 +46,17 @@ export async function POST(req: Request) {
     stream: streamResponse,
   } = parsedJson.data;
 
-  const key =
-    (provider && providers[provider]?.apiKey) ||
-    getChatProviderKey(provider) ||
-    getDefaultProviderKey(provider, oneKey);
+  const isVllm = (provider === 'vllm');
 
-  if (!key) {
+  const key = isVllm
+        ? null
+        : (provider && providers[provider]?.apiKey) ||
+          getChatProviderKey(provider) ||
+          getDefaultProviderKey(provider, oneKey);
+
+  if (!isVllm && !key) {
     console.log('error');
-    const missingKeyError = `no api key provided for ${provider}, either add it to your .env file or in the chat settings`;
+    const missingKeyError = `no api key provided for ${provider} ...`;
     return NextResponse.json({ error: missingKeyError }, { status: 400 });
   }
 
@@ -147,7 +150,7 @@ export async function POST(req: Request) {
       } else {
         // Non-streaming response remains the same
         const responses = await getChatResponse({
-          provider: { ...chatProviderProps, apiKey: key },
+          provider: { ...chatProviderProps, apiKey: key, baseUrl: chatProviderProps.baseUrl },
           systemMessage: chatSystemMessage,
           withContext,
           contextKey,
@@ -158,10 +161,18 @@ export async function POST(req: Request) {
           intellinodeData,
         });
 
-        return NextResponse.json({
-          response: responses.result,
-          references: responses.references,
-        });
+        if (Array.isArray(responses)) {
+          // If the response is an array (as with vLLM), wrap it accordingly.
+          return NextResponse.json({
+            response: responses,
+            references: null,
+          });
+        } else {
+          return NextResponse.json({
+            response: responses.result,
+            references: responses.references,
+          });
+        }
       }
     } 
   } catch (e) {

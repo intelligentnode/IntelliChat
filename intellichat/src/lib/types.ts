@@ -13,4 +13,5 @@ export type ChatProvider =
   | 'cohere'
   | 'google'
   | 'mistral'
-  | 'anthropic';
+  | 'anthropic'
+  | 'vllm';
