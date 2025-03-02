@@ -26,7 +26,7 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
   - **Replicate**: Llama (70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct).
   - **Mistral AI**: Open-weight models.
   - **Anthropic**: claude 3.5
-  - **vLLM**: any mode hosted locally.
+  - **vLLM**: any local model.
 - Manage your API keys via the UI.
 - Access your data using intellinode one key.
 
