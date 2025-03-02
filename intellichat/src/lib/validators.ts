@@ -45,12 +45,12 @@ export type anthropicType = z.infer<typeof anthropicValidator>;
 
 export const vllmValidator = z.object({
   name: z.literal('vllm'),
-  model: z.string().min(1, { message: "Model is required" }),
+  model: z.string().min(1, { message: "Model is required" }).or(z.literal("")),
   apiKey: z.preprocess(
     (val) => (val === null ? undefined : val),
     z.string().optional().default("")
   ),
-  baseUrl: z.string().min(1, { message: "Base URL is required" }),
+  baseUrl: z.string().min(1, { message: "Base URL is required" }).or(z.literal("")),
 });
 
 export const ProvidersValidator = z.object({

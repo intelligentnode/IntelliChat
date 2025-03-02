@@ -16,23 +16,37 @@ export const formSchema = z
   })
   .superRefine((data, ctx) => {
     const name = data.providerName;
-    if (name === 'vllm') return;
-    const keyValue = data.providers[name]?.apiKey;
-    const envKey = data.envKeys[name];
-    const keyExists = keyValue || envKey;
-    const openAi = data.providers.openai;
-
-    // API Key is required if oneKey is not set
-    if ((!data.intellinodeData || !data.oneKey) && !keyExists) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `${name} API Key is required`,
-        path: [`providers.${name}.apiKey`],
-      });
+    if (name === 'vllm') {
+      // For vLLM, require that the nested model and baseUrl are non-empty.
+      if (!data.providers.vllm?.model || data.providers.vllm.model.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "vLLM model is required",
+          path: ["providers", "vllm", "model"],
+        });
+      }
+      if (!data.providers.vllm?.baseUrl || data.providers.vllm.baseUrl.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "vLLM Base URL is required",
+          path: ["providers", "vllm", "baseUrl"],
+        });
+      }
+    } else {
+      // For non-vllm providers, ensure that an API key exists.
+      const keyValue = data.providers[name]?.apiKey;
+      const envKey = data.envKeys[name];
+      const keyExists = keyValue || envKey;
+      if ((!data.intellinodeData || !data.oneKey) && !keyExists) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${name} API Key is required`,
+          path: ["providers", name, "apiKey"],
+        });
+      }
     }
-
-    // OpenAI API Key is required if withContext is true
-    if (data.withContext && !data.envKeys.openAi && !openAi?.apiKey) {
+    // If withContext is enabled, enforce that OpenAI has a key.
+    if (data.withContext && !data.envKeys.openAi && !data.providers.openai?.apiKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'OpenAI API Key is required.',

@@ -52,7 +52,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     systemMessage,
     numberOfMessages,
     providerName: provider,
-    providerModel: defaultProviderModel,
+    providerModel: provider === 'vllm' ? '' : getModel(),
     providers: defaultVllmProviders,
     stream,
     withContext,
