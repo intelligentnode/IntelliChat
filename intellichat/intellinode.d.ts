@@ -27,6 +27,7 @@ declare module 'intellinode' {
         | CohereInput
         | GeminiInput
         | AnthropicInput
+        | VLLMInput
     );
 
     stream(
@@ -36,6 +37,7 @@ declare module 'intellinode' {
         | CohereInput
         | GeminiInput
         | AnthropicInput
+        | VLLMInput
     );
   }
 

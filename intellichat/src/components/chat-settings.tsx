@@ -101,7 +101,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     const payload = {
       provider: selectedProvider,
       withContext: selectedProvider === 'openai' ? withContext : false,
-      stream: selectedProvider === 'openai' || selectedProvider === 'cohere' ? stream : false,
+      stream: selectedProvider === 'openai' || selectedProvider === 'cohere' || provider === 'vllm' ? stream : false,
       providers: updatedProviders,
       ...values,
     };
@@ -249,7 +249,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
             </>
           )}
 
-          {(watchProviderName === 'openai' || watchProviderName === 'cohere') && (
+          {(watchProviderName === 'openai' || watchProviderName === 'cohere' || watchProviderName === 'vllm') && (
             <FormSwitchField
               control={form.control}
               name='stream'
