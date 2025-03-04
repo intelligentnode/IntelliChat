@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({ response: responses });
     } else if (chatProviderProps && chatProviderProps?.name !== 'azure') {
-      let shouldStream = (chatProviderProps.name === 'openai' || chatProviderProps.name === 'cohere') && req.headers.get('Accept') === 'text/event-stream';
+      let shouldStream = (chatProviderProps.name === 'openai' || chatProviderProps.name === 'cohere' || chatProviderProps.name === 'vllm') && req.headers.get('Accept') === 'text/event-stream';
 
       if (shouldStream) {
         const encoder = new TextEncoder();

@@ -90,8 +90,10 @@ export default function Chat() {
   const { mutate, isLoading } = useMutation({
     mutationFn: async (payload: PostMessagePayload) => {
       const settings = getSettings();
-      const isOpenAIOrCohere = settings.provider === 'openai' || settings.provider === 'cohere';
-      const isStreaming = isOpenAIOrCohere && settings.stream;
+      const supportsStreaming = settings.provider === 'openai' ||
+                          settings.provider === 'cohere' ||
+                          settings.provider === 'vllm';
+      const isStreaming = supportsStreaming && settings.stream;
       setIsStreaming(isStreaming);
 
       const res = await fetch('/api/chat', {

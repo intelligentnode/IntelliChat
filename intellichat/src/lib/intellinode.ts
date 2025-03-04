@@ -222,7 +222,7 @@ export async function getChatResponse({
     addMessages(input, messages);
   }
 
-  if ((name === 'openai' || name === 'cohere') && stream && onChunk) {
+  if ((name === 'openai' || name === 'cohere' || name === 'vllm') && stream && onChunk) {
     const streamData = await chatbot.stream(input);
     let fullResponse = '';
 
