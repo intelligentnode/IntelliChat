@@ -1,6 +1,6 @@
 import React from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { cn } from '@/lib/utils';
+import { cn, isPrimarilyRtl } from '@/lib/utils';
 import { Message } from '@/lib/types';
 import { BookIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -10,24 +10,27 @@ type Props = Message & {
   isStreaming?: boolean;
 };
 
-export const ChatMessage = ({ 
-  role, 
-  content, 
-  last, 
-  references, 
-  id, 
-  isStreaming 
+export const ChatMessage = ({
+  role,
+  content,
+  last,
+  references,
+  id,
+  isStreaming
 }: Props) => {
   const isUser = role === 'user';
+  const isRtl = isPrimarilyRtl(content);
 
   return (
     <div className={'items-top flex w-full gap-4 pb-10'}>
       <ChatAvatar isUser={isUser} />
       <div className='mt-2 flex-1 border-b-[1px] border-background pb-10'>
         {isUser ? (
-          <>{content}</>
+          <div className={isRtl ? 'text-right rtl' : ''}>
+            {content}
+          </div>
         ) : (
-          <div>
+          <div className={isRtl ? 'text-right rtl' : ''}>
             <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal break-all'>
               {content}
             </ReactMarkdown>
@@ -50,9 +53,7 @@ export const ChatMessage = ({
             {isStreaming && (
               <div className='flex gap-2'>
                 <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
-
-                <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>      
-                
+                <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
                 <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
               </div>
             )}
