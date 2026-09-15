@@ -1,23 +1,10 @@
-import { getChatProviderKey } from '@/lib/intellinode';
 import { NextResponse } from 'next/server';
+import { envKeyStatus } from '@/lib/intellinode';
 
-// Check if the user has set up their API keys for OpenAI and Replicate in .env
+// Which API keys are set in the environment (never the values).
 export async function GET() {
-  const OpenAIKey = getChatProviderKey('openai');
-  const ReplicateKey = getChatProviderKey('replicate');
-  const CohereKey = getChatProviderKey('cohere');
-  const GoogleKey = getChatProviderKey('google');
-  const AzureKey = getChatProviderKey('azure');
-  const MistralKey = getChatProviderKey('mistral');
-  const anthropicKey = getChatProviderKey('anthropic');
-
-  return NextResponse.json({
-    openai: !!OpenAIKey,
-    replicate: !!ReplicateKey,
-    cohere: !!CohereKey,
-    google: !!GoogleKey,
-    azure: !!AzureKey,
-    mistral: !!MistralKey,
-    anthropic: !!anthropicKey,
-  });
+  return NextResponse.json(envKeyStatus());
 }
+
+// read the environment on every request, so keys added to .env after the build are picked up
+export const dynamic = 'force-dynamic';

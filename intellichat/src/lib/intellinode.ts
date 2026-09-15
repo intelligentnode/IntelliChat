@@ -1,330 +1,310 @@
+// Server side integration with intellinode: chat, images, speech, transcription and model listing.
 import {
+  AnthropicInput,
   ChatContext,
   ChatGPTInput,
   Chatbot,
   CohereInput,
   GeminiInput,
+  ImageModelInput,
   LLamaReplicateInput,
   MistralInput,
-  AnthropicInput,
+  OpenAICompatibleInput,
+  OpenAIWrapper,
   ProxyHelper,
+  RemoteImageModel,
+  RemoteSpeechModel,
+  Text2SpeechInput,
   VLLMInput,
-  SupportedChatModels,
 } from 'intellinode';
-import { ChatProvider } from './types';
+import type { ChatModelInput } from 'intellinode';
 import {
-  azureType,
-  azureValidator,
-  cohereType,
-  cohereValidator,
-  googleType,
-  googleValidator,
-  mistralValidator,
-  mistralType,
-  openAIType,
-  openAIValidator,
-  replicateType,
-  replicateValidator,
-  anthropicType,
-  anthropicValidator,
-  vllmValidator
-} from './validators';
+  EnvKeyVendors,
+  ImageProviders,
+  SpeechProviders,
+  TranscriptionVendor,
+  isCompatibleProvider,
+  isKeyless,
+  providerConfig,
+  supportsStreaming,
+  supportsVision,
+  type ProviderName,
+  type Vendor,
+} from './ai-providers';
+import type { ImagesSettings, ProviderSettings, SpeechSettings, SupportedProvidersType } from './validators';
 
-// We can use this function to get the default provider key if onekey is provided and starts with 'in'
-export function getDefaultProviderKey(provider: ChatProvider, oneKey?: string) {
-  if (!oneKey || (oneKey && !oneKey.startsWith('in'))) {
-    return null;
-  }
+const TRANSCRIPTION_MODEL = 'gpt-4o-mini-transcribe';
+const SPEECH_MODEL = 'gpt-4o-mini-tts';
+const IMAGE_SIZE = '1024x1024';
+const MAX_SPEECH_CHARS = 4000;
 
-  switch (provider) {
-    case 'openai':
-      return process.env.INTELLI_OPENAI_API_KEY;
-    case 'replicate':
-      return process.env.INTELLI_REPLICATE_API_KEY;
-    case 'azure':
-      return process.env.INTELLI_AZURE_API_KEY;
-    case 'cohere':
-      return process.env.INTELLI_COHERE_API_KEY;
-    case 'google':
-      return process.env.INTELLI_GOOGLE_API_KEY;
-    case 'anthropic':
-        return process.env.INTELLI_Anthropic_API_KEY;
-    default:
-      return null;
+type ChatMessage = { role: 'user' | 'assistant'; content: string; image?: string };
+
+// ---------------------------------------------------------------------
+// Keys: settings first, then the environment
+// ---------------------------------------------------------------------
+
+export function envKey(vendor: Vendor) {
+  const value = process.env[EnvKeyVendors[vendor]];
+  if (vendor === 'anthropic') return value || process.env.Anthropic_API_KEY || undefined;
+  return value || undefined;
+}
+
+/** Which vendor keys exist in the environment (booleans only, never the values). */
+export function envKeyStatus() {
+  return Object.fromEntries(Object.keys(EnvKeyVendors).map((vendor) => [vendor, Boolean(envKey(vendor as Vendor))])) as Record<Vendor, boolean>;
+}
+
+/** The key for a chat provider: the settings field, then the environment; local servers need none. */
+export function getChatProviderKey(provider: ProviderName, providers?: SupportedProvidersType) {
+  const fromSettings = providers?.[provider]?.apiKey?.trim();
+  if (fromSettings) return fromSettings;
+  const config = providerConfig(provider);
+  if (config?.envKey) return envKey(provider as Vendor) || null;
+  return null;
+}
+
+/**
+ * The key of a vendor used by images, speech or transcription: an override typed in that section, then the
+ * same vendor's chat key (one OpenAI key serves chat, images, speech and transcription), then the environment.
+ */
+export function resolveVendorKey(vendor: Vendor, providers?: SupportedProvidersType, override?: string) {
+  if (override?.trim()) return override.trim();
+  const chatKey = (providers as Record<string, { apiKey?: string } | undefined> | undefined)?.[vendor]?.apiKey?.trim();
+  if (chatKey) return chatKey;
+  return envKey(vendor) || null;
+}
+
+export class MissingKeyError extends Error {
+  constructor(vendor: string, feature: string) {
+    super(`No ${vendor} API key for ${feature}. Add it in the settings or set ${EnvKeyVendors[vendor as Vendor] || vendor} in .env.`);
+    this.name = 'MissingKeyError';
   }
 }
 
-export function getChatProviderKey(provider: ChatProvider) {
+// ---------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------
+
+function dataUrlParts(dataUrl: string) {
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) throw new Error('Attached images must be base64 data URLs.');
+  return { mime: match[1], data: match[2] };
+}
+
+function createChatInput(provider: ProviderName, model: string, systemMessage: string) {
+  const options = { model: model || undefined };
   switch (provider) {
     case 'openai':
-      return process.env.OPENAI_API_KEY;
-    case 'replicate':
-      return process.env.REPLICATE_API_KEY;
     case 'azure':
-      return process.env.AZURE_API_KEY;
-    case 'cohere':
-      return process.env.COHERE_API_KEY;
+      return new ChatGPTInput(systemMessage, options);
+    case 'anthropic':
+      return new AnthropicInput(systemMessage, options);
     case 'google':
-      return process.env.GOOGLE_API_KEY;
+      return new GeminiInput(systemMessage, options);
+    case 'cohere':
+      return new CohereInput(systemMessage, options);
     case 'mistral':
-      return process.env.MISTRAL_API_KEY;
-    case 'anthropic':
-        return process.env.Anthropic_API_KEY;
+      return new MistralInput(systemMessage, options);
+    case 'replicate':
+      return new LLamaReplicateInput(systemMessage, options);
     case 'vllm':
-      return null;
+      return new VLLMInput(systemMessage, options);
     default:
-      return null;
+      // openrouter, groq, deepseek, ollama, lmstudio
+      return new OpenAICompatibleInput(systemMessage, options);
   }
 }
 
-type getAzureChatResponseParams = {
-  systemMessage: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[];
-  provider?: azureType;
-  withContext: boolean;
-  n: number;
-  oneKey?: string;
-};
-
-export async function getAzureChatResponse({
-  systemMessage,
-  messages,
-  provider,
-  withContext,
-  oneKey,
-  n,
-}: getAzureChatResponseParams) {
-  const parsed = azureValidator.safeParse(provider);
-
-  if (!parsed.success) {
-    const { error } = parsed;
-    throw new Error(error.message);
+// Add one message to the input, with the attached image in the shape of the provider.
+function addMessage(input: ChatModelInput, provider: ProviderName, message: ChatMessage) {
+  if (message.role === 'assistant') {
+    input.addAssistantMessage(message.content);
+    return;
   }
-
-  const { apiKey, resourceName, model, embeddingName, name } = parsed.data;
-  const proxy = createProxy(resourceName);
-
-  const chatbot = new Chatbot(
-      apiKey,
-      'openai',
-      proxy,
-      ...(oneKey ? [{ oneKey, intelliBase: process.env.CUSTOM_INTELLIBASE_URL }] : [])
-    );
-
-  const input = getChatInput(name, model, systemMessage);
-
-  if (withContext) {
-    const contextResponse = await getContextResponse({
-      apiKey,
-      proxy,
-      messages,
-      model: embeddingName,
-      n,
-    });
-    addMessages(input, contextResponse);
+  if (!message.image) {
+    input.addUserMessage(message.content);
+    return;
+  }
+  if (!supportsVision(provider)) {
+    throw new Error(`${providerConfig(provider).label} does not accept images. Switch to OpenAI, Anthropic, Gemini, Mistral or a local vision model.`);
+  }
+  const { mime, data } = dataUrlParts(message.image);
+  const text = message.content || 'Describe this image.';
+  if (provider === 'anthropic') {
+    input.addUserMessage([
+      { type: 'image', source: { type: 'base64', media_type: mime, data } },
+      { type: 'text', text },
+    ]);
+  } else if (provider === 'google') {
+    (input as GeminiInput).messages.push({ role: 'user', parts: [{ inline_data: { mime_type: mime, data } }, { text }] });
   } else {
-    addMessages(input, messages);
+    // OpenAI chat completions and Responses API, Mistral and the OpenAI-compatible servers
+    input.addUserMessage([
+      { type: 'text', text },
+      { type: 'image_url', image_url: { url: message.image } },
+    ]);
   }
-
-  const responses = await chatbot.chat(input);
-  return responses[0];
 }
 
-type getChatResponseParams = {
+type ChatOptions = {
+  provider: ProviderName;
+  settings: ProviderSettings;
+  apiKey: string | null;
   systemMessage: string;
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[];
-  provider?: openAIType | replicateType | cohereType | googleType | mistralType | anthropicType;
+  messages: ChatMessage[];
+  stream: boolean;
   withContext: boolean;
-  stream?: boolean;
-  n: number;
   contextKey?: string | null;
-  oneKey?: string;
-  intellinodeData?: boolean;
-  onChunk?: (chunk: string) => Promise<void>;
-  intelliBase?: string;
+  n: number;
+  signal?: AbortSignal;
+  onChunk?: (chunk: string) => Promise<void> | void;
 };
 
-const validateProvider = (name: string) => {
-  switch (name) {
-    case 'openai':
-      return openAIValidator;
-    case 'replicate':
-      return replicateValidator;
-    case 'cohere':
-      return cohereValidator;
-    case 'google':
-      return googleValidator;
-    case 'mistral':
-      return mistralValidator;
-    case 'anthropic':
-      return anthropicValidator;
-    case 'vllm':
-      return vllmValidator;
-    default:
-      throw new Error('provider is not supported');
+function createChatbot({ provider, settings, apiKey, signal }: Pick<ChatOptions, 'provider' | 'settings' | 'apiKey' | 'signal'>) {
+  const options: Record<string, unknown> = { signal, timeout: 180000, retries: 1 };
+  if (provider === 'azure') {
+    const proxy = new ProxyHelper();
+    proxy.setAzureOpenai((settings as { resourceName?: string }).resourceName || '');
+    return new Chatbot(apiKey || '', 'openai', proxy, options);
   }
-};
-
-export async function getChatResponse({
-  systemMessage,
-  messages,
-  provider,
-  withContext,
-  stream,
-  n,
-  contextKey,
-  oneKey,
-  intellinodeData,
-  onChunk,
-  intelliBase,
-}: getChatResponseParams) {
-  if (!provider) {
-    throw new Error('provider is required');
+  if (isCompatibleProvider(provider) || provider === 'vllm') {
+    options.baseUrl = settings.baseUrl || providerConfig(provider).baseUrl;
   }
-  const parsed = validateProvider(provider.name).safeParse(provider);
-
-  if (!parsed.success) {
-    throw new Error(parsed.error.message);
-  }
-
-  const { apiKey, model, name, baseUrl } = parsed.data;
-  const finalApiKey = name === 'vllm' ? "" : apiKey;
-  const chatbot = new Chatbot(
-      finalApiKey,
-      name === 'google' ? 'gemini' : name,
-      null,
-      oneKey && intellinodeData
-        ? { baseUrl, oneKey, intelliBase: intelliBase || process.env.CUSTOM_INTELLIBASE_URL }
-        : { baseUrl }
-    );
-
-
-  const input = getChatInput(name, model, systemMessage);
-
-  if (withContext) {
-    if (!contextKey) {
-      throw new Error('contextKey is required');
-    }
-
-    const contextResponse = await getContextResponse({
-      apiKey: contextKey,
-      messages,
-      n,
-    });
-    addMessages(input, contextResponse);
-  } else {
-    addMessages(input, messages);
-  }
-
-  if ((name === 'openai' || name === 'cohere' || name === 'vllm') && stream && onChunk) {
-    const streamData = await chatbot.stream(input);
-    let fullResponse = '';
-
-    try {
-      for await (const chunk of streamData) {
-        fullResponse += chunk;
-        // If Response is available as a string
-        const textChunk = typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
-        
-        await onChunk(textChunk);
-      }
-
-      console.log('fullResponse', fullResponse);
-
-      return {
-        result: [fullResponse],
-        references: null
-      };
-    } catch (error) {
-      console.error('Streaming error:', error);
-      throw error;
-    }
-  } else {
-    // Handle non-streaming response
-    const responses = await chatbot.chat(input);
-    console.log("responses", responses);
-    return responses;
-  }
+  const intelliProvider = provider === 'google' ? 'gemini' : provider;
+  return new Chatbot(apiKey || (isKeyless(provider) ? null : ''), intelliProvider, null, options);
 }
 
-function getChatInput(provider: string, model: string, systemMessage: string) {
-  switch (provider) {
-    case 'openai':
-    case 'azure':
-      return new ChatGPTInput(systemMessage, { model, attachReference: true });
-    case 'replicate':
-      return new LLamaReplicateInput(systemMessage, {
-        model,
-        attachReference: true,
-      });
-    case 'cohere':
-      return new CohereInput(systemMessage, { model, attachReference: true });
-    case 'google':
-      return new GeminiInput(systemMessage, { model, attachReference: true });
-    case 'mistral':
-      return new MistralInput(systemMessage, { model, attachReference: true });
-    case 'anthropic':
-      return new AnthropicInput(systemMessage, { model, attachReference: true });
-    case 'vllm':
-      return new VLLMInput(systemMessage, { model, attachReference: true, });
-    default:
-      throw new Error('provider is not supported');
-  }
-}
-
-function addMessages(
-  chatInput: ChatGPTInput | LLamaReplicateInput | CohereInput | GeminiInput,
-  messages: {
-    role: 'user' | 'assistant';
-    content: string;
-  }[]
-) {
-  messages.forEach((m) => {
-    if (m.role === 'user') {
-      chatInput.addUserMessage(m.content);
-    } else {
-      chatInput.addAssistantMessage(m.content);
-    }
-  });
-}
-
-function createProxy(resourceName: string) {
-  const proxy = new ProxyHelper();
-  proxy.setAzureOpenai(resourceName);
-  return proxy;
-}
-
-type ContextResponseParams = {
-  apiKey: string;
-  proxy?: ProxyHelper | null;
-  messages: { role: 'user' | 'assistant'; content: string }[];
-  model?: string | null;
-  n?: number;
-};
-
-async function getContextResponse({
-  apiKey,
-  proxy = null,
-  messages,
-  model,
-  n = 2,
-}: ContextResponseParams) {
+// Keep the messages that matter for the last question, using OpenAI embeddings.
+async function contextMessages(apiKey: string, messages: ChatMessage[], n: number, proxy: ProxyHelper | null = null, model: string | null = null) {
   const context = new ChatContext(apiKey, 'openai', proxy);
-  // extract the last message from the array; this is the user's message
   const userMessage = messages[messages.length - 1].content;
+  const history = messages.map(({ role, content }) => ({ role, content }));
+  return context.getRoleContext(userMessage, history, n, model) as Promise<Array<{ role: 'user' | 'assistant'; content: string }>>;
+}
 
-  // get the closest context to the user's message
-  const contextResponse = await context.getRoleContext(
-    userMessage,
-    messages,
-    n,
-    model
-  );
-  return contextResponse;
+/**
+ * Send the conversation to the provider. Streams through onChunk when `stream` is set and the provider
+ * supports it, otherwise resolves with the reply text.
+ */
+export async function getChatResponse(options: ChatOptions): Promise<string> {
+  const { provider, settings, systemMessage, stream, withContext, contextKey, n, onChunk } = options;
+  const chatbot = createChatbot(options);
+  const input = createChatInput(provider, settings.model, systemMessage);
+
+  let messages = options.messages;
+  if (withContext) {
+    if (!contextKey) throw new MissingKeyError('openai', 'the context feature');
+    const proxy = provider === 'azure' ? new ProxyHelper() : null;
+    if (proxy) proxy.setAzureOpenai((settings as { resourceName?: string }).resourceName || '');
+    const embeddingModel = provider === 'azure' ? (settings as { embeddingName?: string }).embeddingName || null : null;
+    const selected = await contextMessages(contextKey, messages, n, proxy, embeddingModel);
+    // keep the attachment of the current question
+    const last = messages[messages.length - 1];
+    messages = selected.map((message, index) => (index === selected.length - 1 && message.content === last.content ? last : message));
+  }
+  for (const message of messages) addMessage(input, provider, message);
+
+  if (stream && supportsStreaming(provider) && onChunk) {
+    let full = '';
+    for await (const chunk of chatbot.stream(input)) {
+      const text = typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+      full += text;
+      await onChunk(text);
+    }
+    return full;
+  }
+
+  const response = await chatbot.chat(input);
+  const replies = Array.isArray(response) ? response : response.result;
+  const first = replies[0];
+  if (typeof first === 'string') return first;
+  return (first && 'content' in first && first.content) || '';
+}
+
+// ---------------------------------------------------------------------
+// Images
+// ---------------------------------------------------------------------
+
+export async function generateImage(prompt: string, images: ImagesSettings, providers?: SupportedProvidersType) {
+  const config = ImageProviders[images.provider];
+  const apiKey = resolveVendorKey(config.vendor, providers, images.apiKey);
+  if (!apiKey) throw new MissingKeyError(config.vendor, 'image generation');
+
+  const model = new RemoteImageModel(apiKey, images.provider);
+  const input = images.provider === 'openai'
+    ? new ImageModelInput({ prompt, numberOfImages: 1, imageSize: IMAGE_SIZE, quality: 'medium', model: 'gpt-image-2' })
+    : new ImageModelInput({ prompt, numberOfImages: 1, width: 1024, height: 1024, engine: 'stable-diffusion-xl-1024-v1-0' });
+  const [image] = await model.generateImages(input);
+  if (!image) throw new Error(`${config.label} returned no image.`);
+  if (/^https?:\/\//i.test(image)) {
+    const response = await fetch(image);
+    return `data:image/png;base64,${Buffer.from(await response.arrayBuffer()).toString('base64')}`;
+  }
+  return `data:image/png;base64,${image}`;
+}
+
+// ---------------------------------------------------------------------
+// Speech
+// ---------------------------------------------------------------------
+
+async function streamToBuffer(stream: NodeJS.ReadableStream | Buffer | string): Promise<Buffer> {
+  if (Buffer.isBuffer(stream)) return stream;
+  if (typeof stream === 'string') return Buffer.from(stream, 'base64');
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream as AsyncIterable<Buffer | string>) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+/** Text to speech; resolves with MP3 bytes. */
+export async function synthesizeSpeech(text: string, speech: SpeechSettings, providers?: SupportedProvidersType): Promise<Buffer> {
+  const config = SpeechProviders[speech.provider];
+  const apiKey = resolveVendorKey(config.vendor, providers, speech.apiKey);
+  if (!apiKey) throw new MissingKeyError(config.vendor, 'read aloud');
+  const spoken = text.slice(0, MAX_SPEECH_CHARS);
+
+  if (speech.provider === 'openai') {
+    const model = new RemoteSpeechModel(apiKey, 'openAi');
+    const audio = await model.generateSpeech(new Text2SpeechInput({ text: spoken, voice: speech.voice, model: SPEECH_MODEL, stream: true }));
+    return streamToBuffer(audio);
+  }
+  const model = new RemoteSpeechModel(apiKey, 'google');
+  const audio = await model.generateSpeech(new Text2SpeechInput({ text: spoken, language: 'en-gb' }));
+  return streamToBuffer(audio);
+}
+
+/** Speech to text with OpenAI; `file` is the recording or the uploaded audio file. */
+export async function transcribeAudio(file: Blob, filename: string, providers?: SupportedProvidersType, override?: string) {
+  const apiKey = resolveVendorKey(TranscriptionVendor, providers, override);
+  if (!apiKey) throw new MissingKeyError(TranscriptionVendor, 'voice input');
+  const form = new FormData();
+  form.append('file', file, filename);
+  form.append('model', TRANSCRIPTION_MODEL);
+  const wrapper = new OpenAIWrapper(apiKey);
+  const result = await wrapper.speechToText(form);
+  return typeof result === 'string' ? result : result.text || '';
+}
+
+// ---------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------
+
+/** The model ids served by an OpenAI-compatible or vLLM server. */
+export async function listProviderModels(provider: ProviderName, apiKey: string, baseUrl: string): Promise<string[]> {
+  const config = providerConfig(provider);
+  const url = (baseUrl || config.baseUrl || '').replace(/\/+$/, '');
+  if (provider === 'vllm') {
+    const response = await fetch(`${url}/v1/models`);
+    if (!response.ok) throw new Error(`vLLM answered ${response.status} for ${url}/v1/models`);
+    const json = (await response.json()) as { data?: Array<{ id: string }> };
+    return (json.data || []).map((model) => model.id);
+  }
+  if (!isCompatibleProvider(provider)) {
+    return [...(config.models || [])];
+  }
+  const key = apiKey?.trim() || getChatProviderKey(provider) || null;
+  const chatbot = new Chatbot(key, provider as 'ollama', null, { baseUrl: url, timeout: 15000, retries: 0 });
+  return chatbot.listModels();
 }
