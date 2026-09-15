@@ -1,4 +1,4 @@
-import { envKeys } from '@/lib/ai-providers';
+import { AIProviders, envKeys } from '@/lib/ai-providers';
 import type { Message } from '@/lib/types';
 import type {
   PostMessagePayload,
@@ -33,14 +33,14 @@ type ChatSettingsState = {
 };
 
 const initialProviders: ChatSettingsState['providers'] = {
-  cohere: { name: 'cohere', model: 'command', apiKey: '' },
-  openai: { name: 'openai', model: 'gpt-4o', apiKey: '' },
+  cohere: { name: 'cohere', model: 'command-a-03-2025', apiKey: '' },
+  openai: { name: 'openai', model: 'gpt-5.5', apiKey: '' },
   replicate: {
     name: 'replicate',
     model: '70b-chat',
     apiKey: '',
   },
-  google: { name: 'google', model: 'gemini', apiKey: '' },
+  google: { name: 'google', model: 'gemini-3.6-flash', apiKey: '' },
   
   azure: {
     name: 'azure',
@@ -49,8 +49,8 @@ const initialProviders: ChatSettingsState['providers'] = {
     resourceName: '',
     embeddingName: '',
   },
-  mistral: { name: 'mistral', model: 'mistral-tiny', apiKey: '' },
-  anthropic: { name: 'anthropic', model: 'claude-3-sonnet-20240229', apiKey: '' },
+  mistral: { name: 'mistral', model: 'mistral-medium-latest', apiKey: '' },
+  anthropic: { name: 'anthropic', model: 'claude-sonnet-5', apiKey: '' },
   vllm: {
     name: 'vllm',
     model: '',
@@ -133,6 +133,19 @@ export const useChatSettings = create<ChatSettingsState>()(
           )
         ),
       name: 'chat-settings',
+      // persisted settings from an older version can name models that no longer exist; fall back to the defaults
+      version: 2,
+      migrate: (persistedState) => {
+        const state = (persistedState || {}) as Partial<ChatSettingsState>;
+        const providers = { ...initialProviders } as Record<string, any>;
+        for (const [key, saved] of Object.entries(state.providers || {})) {
+          if (!saved || !(key in providers)) continue;
+          const known = (AIProviders as Record<string, { models?: readonly string[] }>)[key]?.models;
+          const model = known && saved.model && !known.includes(saved.model) ? known[0] : saved.model;
+          providers[key] = { ...providers[key], ...saved, model };
+        }
+        return { ...state, providers } as ChatSettingsState;
+      },
     }
   )
 );

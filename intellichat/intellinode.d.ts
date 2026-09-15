@@ -42,7 +42,7 @@ declare module 'intellinode' {
   }
 
   class ChatGPTInput {
-    model: string = 'gpt-4o-mini';
+    model: string = 'gpt-5.5';
     temperature: number = 1;
     maxTokens: number | null = null;
     numberOfOutputs: number = 1;

@@ -2,18 +2,25 @@
 
 import { SupportedProvidersNamesType } from './validators';
 
-const OpenAIModels = ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini', 'o3-mini', 'gpt-4', 'gpt-3.5-turbo'] as const;
-const ReplicateModels = [
-  '70b-chat',
-  '13b-chat',
-  '34b-code',
-  '34b-python',
-  '13b-code-instruct',
+// The first model of each list is the default in the settings panel.
+const OpenAIModels = ['gpt-5.5', 'gpt-5.5-pro', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-5.1', 'gpt-4.1', 'gpt-4.1-mini'] as const;
+const ReplicateModels = ['70b-chat', '13b-chat'] as const;
+const CohereModels = [
+  'command-a-03-2025',
+  'command-a-plus-05-2026',
+  'command-a-reasoning-08-2025',
+  'command-r-plus-08-2024',
+  'command-r7b-12-2024',
 ] as const;
-const CohereModels = ['command-r-plus', 'command-r', 'command'] as const;
-const GoogleModels = ['gemini'] as const;
-const MistralModels = ['mistral-tiny', 'mistral-medium'] as const;
-const AnthropicModels = ['claude-3-sonnet-20240229', 'claude-3-opus-20240229'] as const;
+const GoogleModels = ['gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-3.1-pro-preview'] as const;
+const MistralModels = [
+  'mistral-medium-latest',
+  'mistral-small-latest',
+  'magistral-medium-latest',
+  'magistral-small-latest',
+  'ministral-14b-latest',
+] as const;
+const AnthropicModels = ['claude-sonnet-5', 'claude-opus-5', 'claude-fable-5-1', 'claude-haiku-4-5'] as const;
 const VLLMModels = [] as const;
 
 export const AIProviders = {

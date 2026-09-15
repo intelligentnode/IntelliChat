@@ -19,13 +19,13 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 ## Features
 
 - Select your preferred AI Provider and model from the UI.
-  - **OpenAI ChatGPT**: o1, o3-mini, gpt-4o.
-  - **Google Gemini**.
-  - **Azure Openai**.
-  - **Cohere Coral**.
-  - **Replicate**: Llama (70b-chat, 13b-chat, 34b-code, 34b-python 13b-code-instruct).
-  - **Mistral AI**: Open-weight models.
-  - **Anthropic**: claude 3.5
+  - **OpenAI**: GPT-5.5, GPT-5.5 Pro, GPT-5.4, GPT-5.1, GPT-4.1.
+  - **Anthropic**: Claude Sonnet 5, Opus 5, Fable 5.1, Haiku 4.5.
+  - **Google Gemini**: Gemini 3.6, 3.7 and 3.8 Flash, 3.1 Pro.
+  - **Cohere**: Command A Plus, Command A, Command A Reasoning, Command R.
+  - **Mistral AI**: Mistral Medium, Mistral Small, Magistral, Ministral.
+  - **Azure OpenAI**.
+  - **Replicate**: Llama chat models.
   - **vLLM**: any local model.
 - Manage your API keys via the UI.
 - Access your data using intellinode one key.
