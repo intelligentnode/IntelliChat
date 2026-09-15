@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ImagesValidator, ProvidersValidator, SpeechValidator, providerNames } from './validators';
+import { CodeValidator, ImagesValidator, ProvidersValidator, SpeechValidator, providerNames } from './validators';
 import { hasModelList, isKeyless, providerConfig } from './ai-providers';
 
 export const formSchema = z
@@ -13,6 +13,7 @@ export const formSchema = z
     stream: z.boolean(),
     images: ImagesValidator,
     speech: SpeechValidator,
+    code: CodeValidator,
     envKeys: z.record(z.boolean()),
   })
   .superRefine((data, ctx) => {

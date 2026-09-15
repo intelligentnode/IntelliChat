@@ -7,18 +7,27 @@ import { ChatPrompt, type Attachment } from './chat-prompt';
 import Container from '@/components/shared/container';
 import { useQuery } from '@tanstack/react-query';
 import type { PostMessagePayload } from '@/lib/validators';
-import { Message, STREAM_ERROR_MARKER } from '@/lib/types';
+import { STREAM_ERROR_MARKER, type AgentMessage, type AgentStep, type LinkContext, type Message } from '@/lib/types';
 import { useChatSettings } from '@/store/chat-settings';
 import { useToast } from './ui/use-toast';
-import { supportsStreaming, supportsVision, type Vendor } from '@/lib/ai-providers';
+import { providerConfig, supportsStreaming, supportsTools, supportsVision, type Vendor } from '@/lib/ai-providers';
 import { Recorder, imageToDataUrl, requestImage, speak, stopSpeaking, transcribe } from '@/lib/client';
 import { imageCommandMessage, parseCommand } from '@/lib/commands';
+import { connectRepo, fetchLinkContext, findGitHubLinks, linkLabel, parseRepoInput, type ConnectedRepo, type GitHubAccess } from '@/lib/github';
+import { runAgent } from '@/lib/agent';
 import { TooltipProvider } from './ui/tooltip';
 
 // The Voice tab key also serves transcription when the speech provider is OpenAI.
 function transcriptionKey() {
   const { speech } = useChatSettings.getState();
   return speech.provider === 'openai' ? speech.apiKey : '';
+}
+
+// GitHub from the browser with the user's token or none, or through the server when only .env has a token.
+function githubAccess(): GitHubAccess {
+  const { code, envKeys } = useChatSettings.getState();
+  if (code.githubToken.trim()) return { token: code.githubToken.trim() };
+  return envKeys.github ? { viaServer: true } : {};
 }
 
 // Image requests and generated images are not part of the conversation sent to the chat model,
@@ -28,13 +37,27 @@ function isConversation(message: Message) {
   return !parseCommand(message.content).command;
 }
 
+// What the model receives for a message: the text plus the details of its GitHub links.
+function messageText(message: Message) {
+  const details = (message.context || []).filter((item) => item.state === 'ready' && item.content).map((item) => item.content);
+  return details.length ? `${message.content}\n\n${details.join('\n\n')}` : message.content;
+}
+
+// An image prompt with a short line about the linked repos, issues or files.
+function imagePromptWithLinks(text: string, context?: LinkContext[]) {
+  const about = (context || []).filter((item) => item.state === 'ready' && item.summary).map((item) => item.summary).join('; ');
+  return about ? `${text}\n\nAbout: ${about.slice(0, 600)}` : text;
+}
+
 export default function Chat() {
   const messages = useChatSettings((s) => s.messages);
   const getSettings = useChatSettings((s) => s.getSettings);
   const setEnvKeys = useChatSettings((s) => s.setEnvKeys);
   const setMessage = useChatSettings((s) => s.setMessage);
+  const updateMessage = useChatSettings((s) => s.updateMessage);
   const images = useChatSettings((s) => s.images);
   const speech = useChatSettings((s) => s.speech);
+  const code = useChatSettings((s) => s.code);
 
   const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +66,10 @@ export default function Chat() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [canRecord, setCanRecord] = useState(false);
+  // saved settings exist only in the browser, so settings-driven controls render after the first client render
+  const [mounted, setMounted] = useState(false);
+  // the GitHub repo connected to this chat
+  const [repo, setRepo] = useState<ConnectedRepo | null>(null);
 
   const { toast } = useToast();
   const input = useRef<HTMLTextAreaElement>(null);
@@ -51,6 +78,7 @@ export default function Chat() {
 
   useEffect(() => {
     setCanRecord(Recorder.supported());
+    setMounted(true);
   }, []);
 
   useQuery({
@@ -66,6 +94,15 @@ export default function Chat() {
     onSuccess: (data) => setEnvKeys(data),
   });
 
+  // local files exist only when the server runs with CODE_WORKSPACE
+  const workspace = useQuery({
+    queryKey: ['workspace'],
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    queryFn: async () => (await (await fetch('/api/workspace')).json()) as { enabled: boolean; name: string },
+  });
+  const localFolder = code.localFiles && workspace.data?.enabled ? { name: workspace.data.name, allowEdits: code.allowEdits } : null;
+
   const showError = (title: string, error: unknown) => {
     toast({ title, variant: 'destructive', description: error instanceof Error ? error.message : String(error), duration: 6000 });
   };
@@ -74,6 +111,21 @@ export default function Chat() {
   const maybeReadAloud = (id: string, text: string) => {
     if (!speech.readAloud || !text) return;
     speak(id, text, speech, getSettings().providers).catch((error) => showError('Read aloud', error));
+  };
+
+  const onConnectRepo = async (value: string) => {
+    const target = parseRepoInput(value);
+    if (!target) {
+      showError('GitHub', 'Enter owner/repo or a GitHub link.');
+      return false;
+    }
+    try {
+      setRepo(await connectRepo(target, githubAccess()));
+      return true;
+    } catch (error) {
+      showError('GitHub', error);
+      return false;
+    }
   };
 
   const readStream = async (response: Response, messageId: string, signal: AbortSignal) => {
@@ -122,7 +174,7 @@ export default function Chat() {
     const streaming = settings.stream && supportsStreaming(settings.provider);
     const history = [...messages, prompt]
       .filter(isConversation)
-      .map(({ role, content, image }) => ({ role, content, ...(image && { image }) }));
+      .map((message) => ({ role: message.role, content: messageText(message), ...(message.image && { image: message.image }) }));
     const payload: PostMessagePayload = { ...settings, messages: history };
 
     const res = await fetch('/api/chat', {
@@ -147,9 +199,64 @@ export default function Chat() {
     maybeReadAloud(messageId, content);
   };
 
+  // the coding assistant: tool steps show live, then the answer
+  const sendAgent = async (prompt: Message, activeRepo: ConnectedRepo | null, signal: AbortSignal) => {
+    const id = nanoid();
+    let steps: AgentStep[] = [];
+    setStreamingMessage({ id, role: 'assistant', content: '', steps });
+    const history: AgentMessage[] = [...messages, prompt].filter(isConversation).map((message) =>
+      message.role === 'user'
+        ? { role: 'user', content: messageText(message), ...(message.image && { image: message.image }) }
+        : { role: 'assistant', content: messageText(message) }
+    );
+    try {
+      const result = await runAgent({
+        settings: getSettings(),
+        messages: history,
+        repo: activeRepo,
+        local: Boolean(localFolder),
+        allowEdits: code.allowEdits,
+        access: githubAccess(),
+        signal,
+        onSteps: (next) => {
+          steps = next;
+          setStreamingMessage({ id, role: 'assistant', content: '', steps: next });
+        },
+      });
+      setStreamingMessage(null);
+      setMessage({ id, role: 'assistant', content: result.text, steps: result.steps });
+      maybeReadAloud(id, result.text);
+    } catch (error) {
+      setStreamingMessage(null);
+      // keep the steps that ran, so the timeline still shows what happened
+      if (steps.length) {
+        const settled = steps.map((step) => (step.state === 'running' ? { ...step, state: 'error' as const, summary: 'Stopped' } : step));
+        setMessage({ id, role: 'assistant', content: '', steps: settled, stopped: true });
+      }
+      throw error;
+    }
+  };
+
   const sendImage = async (prompt: string, signal: AbortSignal) => {
     const image = await requestImage(prompt, images, getSettings().providers, signal);
     setMessage({ id: nanoid(), content: '', image, imagePrompt: prompt, role: 'assistant' });
+  };
+
+  // fetch the details of a message's GitHub links; the chips under the message show the progress
+  const loadLinks = async (message: Message, links: ReturnType<typeof findGitHubLinks>, signal: AbortSignal): Promise<Message> => {
+    const access = githubAccess();
+    const context = await Promise.all(
+      links.map(({ url, ref }) =>
+        fetchLinkContext(url, ref, access, signal).catch((error): LinkContext => ({
+          url,
+          label: linkLabel(ref),
+          state: 'error',
+          error: error instanceof Error ? error.message : String(error),
+        }))
+      )
+    );
+    updateMessage(message.id, { context });
+    return { ...message, context };
   };
 
   const onSubmit = async () => {
@@ -172,11 +279,13 @@ export default function Chat() {
       return;
     }
 
-    const prompt: Message = {
+    const links = findGitHubLinks(text);
+    let prompt: Message = {
       id: nanoid(),
       content: asImage ? imageCommandMessage(text) : text,
       role: 'user',
       ...(attachment && !asImage && { image: attachment.dataUrl }),
+      ...(links.length > 0 && { context: links.map(({ url, ref }) => ({ url, label: linkLabel(ref), state: 'loading' as const })) }),
     };
     setMessage(prompt);
     input.current.value = '';
@@ -188,8 +297,31 @@ export default function Chat() {
     abortController.current = controller;
     setIsLoading(true);
     try {
-      if (asImage) await sendImage(text, controller.signal);
-      else await sendChat(prompt, controller.signal);
+      if (links.length) {
+        prompt = await loadLinks(prompt, links, controller.signal);
+        if (controller.signal.aborted) return;
+      }
+
+      // with repo connecting on, a pasted GitHub link connects its repo when none is connected yet
+      let activeRepo = code.github ? repo : null;
+      if (code.github && !activeRepo && links.length && !asImage) {
+        const { ref } = links[0];
+        const branch = ref.kind === 'file' || ref.kind === 'dir' ? ref.ref : undefined;
+        activeRepo = await connectRepo({ owner: ref.owner, repo: ref.repo, branch }, githubAccess(), controller.signal).catch(() => null);
+        if (activeRepo) setRepo(activeRepo);
+      }
+
+      const wantsTools = !asImage && (Boolean(activeRepo) || Boolean(localFolder));
+      if (asImage) {
+        await sendImage(imagePromptWithLinks(text, prompt.context), controller.signal);
+      } else if (wantsTools && supportsTools(settings.provider)) {
+        await sendAgent(prompt, activeRepo, controller.signal);
+      } else {
+        if (wantsTools) {
+          toast({ title: 'Coding assistant', description: `${providerConfig(settings.provider).label} cannot use tools, so it answers from the message and the link details only.`, duration: 6000 });
+        }
+        await sendChat(prompt, controller.signal);
+      }
     } catch (error: any) {
       if (error?.name !== 'AbortError') showError(asImage ? 'Image' : 'Error', error);
       setStreamingMessage(null);
@@ -212,8 +344,8 @@ export default function Chat() {
         setImageMode(false);
       } else if (file.type.startsWith('audio/') || /\.(mp3|wav|m4a|webm|ogg|flac)$/i.test(file.name)) {
         setIsTranscribing(true);
-        const text = await transcribe(file, file.name, getSettings().providers, transcriptionKey());
-        appendToPrompt(text);
+        const transcript = await transcribe(file, file.name, getSettings().providers, transcriptionKey());
+        appendToPrompt(transcript);
       } else {
         showError('Attachment', 'Attach an image or an audio file.');
       }
@@ -224,10 +356,10 @@ export default function Chat() {
     }
   };
 
-  const appendToPrompt = (text: string) => {
+  const appendToPrompt = (value: string) => {
     if (!input.current) return;
     const current = input.current.value.trim();
-    input.current.value = current ? `${current} ${text}` : text;
+    input.current.value = current ? `${current} ${value}` : value;
     input.current.focus();
   };
 
@@ -238,8 +370,8 @@ export default function Chat() {
         setIsRecording(false);
         setIsTranscribing(true);
         const { blob, filename } = await recorder.current.stop();
-        const text = await transcribe(blob, filename, getSettings().providers, transcriptionKey());
-        appendToPrompt(text);
+        const transcript = await transcribe(blob, filename, getSettings().providers, transcriptionKey());
+        appendToPrompt(transcript);
       } else {
         await recorder.current.start();
         setIsRecording(true);
@@ -272,6 +404,11 @@ export default function Chat() {
           isRecording={isRecording}
           isTranscribing={isTranscribing}
           onToggleRecording={onToggleRecording}
+          githubEnabled={mounted && code.github}
+          repo={repo}
+          onConnectRepo={onConnectRepo}
+          onDisconnectRepo={() => setRepo(null)}
+          localFolder={localFolder}
         />
       </Container>
     </TooltipProvider>

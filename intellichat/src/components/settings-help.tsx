@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HelpCircle, ImagePlus, Key, Languages, Mic, Paperclip, Square, Volume2, type LucideIcon } from 'lucide-react';
+import { Github, HelpCircle, ImagePlus, Key, Languages, Mic, Paperclip, Square, Volume2, type LucideIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CommandBadge } from './command-badge';
@@ -12,6 +12,7 @@ const features: Array<{ icon: LucideIcon; text: string }> = [
   { icon: Mic, text: 'Use the microphone to speak your message.' },
   { icon: Volume2, text: 'Press Read aloud under a reply to listen to it.' },
   { icon: Square, text: 'Press Stop to end a reply early.' },
+  { icon: Github, text: 'Paste a GitHub link to ask about it, or connect a repo in Settings, Code.' },
   { icon: Languages, text: 'Write in any language, including Arabic.' },
   { icon: Key, text: 'Add your own API key in each tab, or use the keys set for this app.' },
 ];

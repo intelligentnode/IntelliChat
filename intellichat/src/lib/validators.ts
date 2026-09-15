@@ -93,6 +93,15 @@ export const SpeechValidator = z.object({
 });
 export type SpeechSettings = z.infer<typeof SpeechValidator>;
 
+// Coding assistant: connect GitHub repos (a token is optional for public repos) and use local files when CODE_WORKSPACE is set
+export const CodeValidator = z.object({
+  github: z.boolean().default(false),
+  githubToken: z.string().optional().default(''),
+  localFiles: z.boolean().default(true),
+  allowEdits: z.boolean().default(false),
+});
+export type CodeSettings = z.infer<typeof CodeValidator>;
+
 const messageValidator = z.object({
   content: z.string(),
   role: z.enum(['user', 'assistant']),

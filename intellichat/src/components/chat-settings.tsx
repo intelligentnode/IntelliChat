@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, ChevronDown, Info, Loader2, RefreshCw } from 'lucide-react';
+import { Check, ChevronDown, FolderGit2, Info, Loader2, RefreshCw } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 import { useChatSettings, defaultProviderSettings } from '@/store/chat-settings';
 import {
@@ -33,7 +34,7 @@ import { FormInputField, FormSelectField, FormSwitchField } from '@/components/f
 import { useToast } from './ui/use-toast';
 
 type FormValues = z.infer<typeof formSchema>;
-type Tab = 'chat' | 'images' | 'voice';
+type Tab = 'chat' | 'images' | 'voice' | 'code';
 
 // What serves a key while its field is empty: a key from .env or from the Chat tab, or nothing needed (local servers).
 type KeyNote = { text: string; tone: 'ready' | 'info'; overrides?: string };
@@ -42,6 +43,7 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'chat', label: 'Chat' },
   { id: 'images', label: 'Images' },
   { id: 'voice', label: 'Voice' },
+  { id: 'code', label: 'Code' },
 ];
 
 const providerGroups: Array<{ label: string; names: ProviderName[] }> = [
@@ -223,6 +225,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     withContext: store.withContext,
     images: store.images,
     speech: store.speech,
+    code: store.code,
     envKeys: store.envKeys,
   };
 
@@ -237,6 +240,15 @@ export default function ChatSettings({ close }: { close: () => void }) {
   const watchImages = form.watch('images');
   const watchSpeech = form.watch('speech');
   const watchContext = form.watch('withContext');
+  const watchCode = form.watch('code');
+
+  // local files exist only when the server runs with CODE_WORKSPACE
+  const workspace = useQuery({
+    queryKey: ['workspace'],
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    queryFn: async () => (await (await fetch('/api/workspace')).json()) as { enabled: boolean; name: string },
+  });
   const envKeys = store.envKeys as Record<string, boolean>;
   const config = providerConfig(watchProviderName);
   const selected = watchProviders[watchProviderName];
@@ -270,6 +282,8 @@ export default function ChatSettings({ close }: { close: () => void }) {
     chat: isKeyless(watchProviderName) || Boolean(selected?.apiKey?.trim() || envKeys[watchProviderName]),
     images: Boolean(watchImages.apiKey?.trim() || imageNote),
     voice: Boolean(watchSpeech.apiKey?.trim() || speechNote),
+    // every coding feature is optional
+    code: true,
   };
 
   const providerHint = (name: ProviderName) => {
@@ -292,6 +306,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
       stream: supportsStreaming(providerName) ? stream : false,
       images: values.images,
       speech: values.speech,
+      code: values.code,
       systemMessage: values.systemMessage,
       numberOfMessages: values.numberOfMessages,
     });
@@ -303,6 +318,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
     if (errors.providers || errors.providerModel || errors.providerName || errors.numberOfMessages) setTab('chat');
     else if (errors.images) setTab('images');
     else if (errors.speech) setTab('voice');
+    else if (errors.code) setTab('code');
   }
 
   function onChangeProviderName(name: ProviderName) {
@@ -348,7 +364,7 @@ export default function ChatSettings({ close }: { close: () => void }) {
   return (
     <Form {...form}>
       <form className='flex min-h-0 flex-1 flex-col' onSubmit={form.handleSubmit(onSubmit, onError)}>
-        <div role='tablist' aria-label='Settings' className='grid grid-cols-3 gap-1 rounded-lg bg-zinc-800/80 p-1'>
+        <div role='tablist' aria-label='Settings' className='grid grid-cols-4 gap-1 rounded-lg bg-zinc-800/80 p-1'>
           {tabs.map(({ id, label }) => (
             <button
               key={id}
@@ -541,6 +557,49 @@ export default function ChatSettings({ close }: { close: () => void }) {
                     Voice input turns the microphone and audio files into text with OpenAI.
                     {transcriptionReady ? '' : ' It needs an OpenAI key.'}
                   </span>
+                </div>
+              </>
+            )}
+
+            {tab === 'code' && (
+              <>
+                <p className='text-sm text-zinc-400'>Code blocks with copy and download, and the details of pasted GitHub links, work in every chat.</p>
+                <FormSwitchField
+                  control={form.control}
+                  name='code.github'
+                  label='Connect GitHub repos'
+                  withTooltip={true}
+                  tooltipText='Adds a GitHub button to the message box. Connect one repo to the chat and the assistant reads its files, searches code and checks issues and pull requests.'
+                />
+                <KeyField
+                  key='github-token'
+                  control={form.control}
+                  name='code.githubToken'
+                  label='GitHub token (optional)'
+                  envVar='GITHUB_TOKEN'
+                  note={envNote('github')}
+                />
+                <div className='space-y-4 rounded-md border border-zinc-800 p-3'>
+                  <div className='flex items-center gap-2 text-sm font-medium text-zinc-200'>
+                    <FolderGit2 size={16} /> Local files
+                  </div>
+                  {workspace.data?.enabled ? (
+                    <>
+                      <p className='text-xs text-zinc-400'>Using the {workspace.data.name} folder from CODE_WORKSPACE in .env.</p>
+                      <FormSwitchField control={form.control} name='code.localFiles' label='Let the assistant read files' />
+                      {watchCode.localFiles && (
+                        <FormSwitchField
+                          control={form.control}
+                          name='code.allowEdits'
+                          label='Allow file edits'
+                          withTooltip={true}
+                          tooltipText='The assistant can change files in this folder and shows every change as a diff.'
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <p className='text-xs text-zinc-400'>When you run the app on your computer, set CODE_WORKSPACE in .env to a project folder so the assistant can read and edit its files.</p>
+                  )}
                 </div>
               </>
             )}

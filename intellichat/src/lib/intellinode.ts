@@ -17,7 +17,8 @@ import {
   Text2SpeechInput,
   VLLMInput,
 } from 'intellinode';
-import type { ChatModelInput } from 'intellinode';
+import type { ChatModelInput, ToolDefinition } from 'intellinode';
+import type { AgentMessage, ToolCall } from './types';
 import {
   EnvKeyVendors,
   ImageProviders,
@@ -220,6 +221,42 @@ export async function getChatResponse(options: ChatOptions): Promise<string> {
   const first = replies[0];
   if (typeof first === 'string') return first;
   return (first && 'content' in first && first.content) || '';
+}
+
+// ---------------------------------------------------------------------
+// Coding assistant
+// ---------------------------------------------------------------------
+
+type AgentStepOptions = Pick<ChatOptions, 'provider' | 'settings' | 'apiKey' | 'systemMessage' | 'signal'> & {
+  messages: AgentMessage[];
+  tools: ToolDefinition[];
+  // ask for the final answer without more tools
+  finalize?: boolean;
+};
+
+/**
+ * One model call of the coding assistant: the answer, or the tools the model wants next. The browser runs the tools
+ * and calls again with their results, so every request stays short.
+ */
+export async function runAgentStep(options: AgentStepOptions): Promise<{ content: string; toolCalls: ToolCall[] }> {
+  const { provider, settings, systemMessage, messages, tools, finalize } = options;
+  const chatbot = createChatbot(options);
+  const input = createChatInput(provider, settings.model, systemMessage);
+  input.tools = tools;
+  if (finalize) input.toolChoice = 'none';
+  for (const message of messages) {
+    if (message.role === 'tool') input.addToolResults(message.results);
+    else if (message.role === 'assistant' && message.toolCalls?.length) input.addToolCalls(message.toolCalls, message.content || null);
+    else addMessage(input, provider, message);
+  }
+  const response = await chatbot.chat(input);
+  const replies = Array.isArray(response) ? response : response.result;
+  const first = replies[0];
+  if (first && typeof first === 'object' && 'tool_calls' in first && Array.isArray(first.tool_calls) && first.tool_calls.length) {
+    return { content: first.content || '', toolCalls: first.tool_calls as ToolCall[] };
+  }
+  if (typeof first === 'string') return { content: first, toolCalls: [] };
+  return { content: (first && 'content' in first && first.content) || '', toolCalls: [] };
 }
 
 // ---------------------------------------------------------------------

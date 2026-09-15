@@ -196,6 +196,11 @@ export function hasModelList(name: string) {
   return Boolean(providerConfig(name)?.models?.length);
 }
 
+// Tool calling (the coding assistant reads repos and files with tools); Cohere and Replicate chat without them.
+export function supportsTools(name: string) {
+  return Boolean(providerConfig(name)) && !['cohere', 'replicate'].includes(name);
+}
+
 // ---- images and speech ----
 
 export const ImageProviders = {
@@ -230,6 +235,7 @@ export const EnvKeyVendors = {
   deepseek: 'DEEPSEEK_API_KEY',
   azure: 'AZURE_API_KEY',
   stability: 'STABILITY_API_KEY',
+  github: 'GITHUB_TOKEN',
 } as const;
 export type Vendor = keyof typeof EnvKeyVendors;
 

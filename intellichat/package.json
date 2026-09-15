@@ -32,6 +32,7 @@
     "autoprefixer": "10.4.15",
     "class-variance-authority": "0.7.0",
     "clsx": "2.0.0",
+    "diff": "^8.0.2",
     "encoding": "^0.1.13",
     "eslint": "8.48.0",
     "eslint-config-next": "13.4.19",
@@ -45,6 +46,7 @@
     "react-github-btn": "^1.4.0",
     "react-hook-form": "^7.46.1",
     "react-markdown": "8.0.7",
+    "react-syntax-highlighter": "^16.1.1",
     "tailwind-merge": "1.14.0",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "1.0.7",
@@ -54,6 +56,7 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "0.5.10",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-react-hooks": "4.6.0",

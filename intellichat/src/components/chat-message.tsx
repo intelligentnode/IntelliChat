@@ -7,6 +7,9 @@ import { useChatSettings } from '@/store/chat-settings';
 import { currentlySpeaking, onSpeechChange, speak } from '@/lib/client';
 import { parseCommand, textDirection } from '@/lib/commands';
 import { CommandBadge } from './command-badge';
+import { CodeBlock, codeInfo } from './code-block';
+import { AgentSteps } from './agent-steps';
+import { LinkContextChips } from './link-context';
 import { useToast } from './ui/use-toast';
 
 type Props = Message & {
@@ -14,9 +17,29 @@ type Props = Message & {
   isStreaming?: boolean;
 };
 
-export const ChatMessage = ({ role, content, image, imagePrompt, stopped, id, isStreaming }: Props) => {
+// Code blocks draw their own container, so markdown's <pre> only passes its children through.
+function MarkdownPre({ children }: { children?: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+function MarkdownCode({ node, inline, className, children, ...props }: any) {
+  if (inline) {
+    return (
+      <code className='rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[0.85em] text-sky-200' {...props}>
+        {children}
+      </code>
+    );
+  }
+  const { language, file } = codeInfo(className, node?.data?.meta || '');
+  return <CodeBlock code={String(children).replace(/\n$/, '')} language={language} file={file} />;
+}
+
+const markdownComponents = { pre: MarkdownPre, code: MarkdownCode };
+
+export const ChatMessage = ({ role, content, image, imagePrompt, stopped, id, isStreaming, context, steps }: Props) => {
   const isUser = role === 'user';
   const command = isUser ? parseCommand(content) : null;
+  const isAgent = Array.isArray(steps);
 
   return (
     <div className={'items-top flex w-full gap-4 pb-10'} data-testid={`message-${role}`}>
@@ -39,32 +62,39 @@ export const ChatMessage = ({ role, content, image, imagePrompt, stopped, id, is
           </figure>
         )}
         {isUser ? (
-          command?.command ? (
-            // the command as a badge, followed by the prompt in its own direction
-            <div className='flex flex-wrap items-center gap-2' dir={textDirection(command.text)}>
-              <CommandBadge />
-              <span className='whitespace-pre-wrap break-words'>{command.text}</span>
-            </div>
-          ) : (
-            <div className='whitespace-pre-wrap break-words' dir='auto'>{content}</div>
-          )
+          <>
+            {command?.command ? (
+              // the command as a badge, followed by the prompt in its own direction
+              <div className='flex flex-wrap items-center gap-2' dir={textDirection(command.text)}>
+                <CommandBadge />
+                <span className='whitespace-pre-wrap break-words'>{command.text}</span>
+              </div>
+            ) : (
+              <div className='whitespace-pre-wrap break-words' dir='auto'>{content}</div>
+            )}
+            {context?.length ? <LinkContextChips context={context} /> : null}
+          </>
         ) : (
           // dir=auto: a reply that starts in Arabic reads right to left; code blocks stay left to right
           <div dir='auto'>
+            {isAgent && <AgentSteps steps={steps} working={isStreaming} />}
             {content && (
-              <ReactMarkdown className='prose prose-invert max-w-none break-words prose-code:whitespace-normal [&_pre]:[direction:ltr] [&_pre]:text-left'>
+              <ReactMarkdown
+                className='prose prose-invert max-w-none break-words prose-code:before:content-none prose-code:after:content-none'
+                components={markdownComponents}
+              >
                 {content}
               </ReactMarkdown>
             )}
             {stopped && <div className='mt-1 text-xs italic text-zinc-400'>Stopped</div>}
-            {isStreaming ? (
+            {isStreaming && !isAgent ? (
               <div className='flex gap-2'>
                 <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
                 <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
                 <div className='streaming-indicator animate-pulse mt-2 h-2 w-2 rounded-full bg-white text-sm text-muted-foreground'></div>
               </div>
             ) : (
-              content && !image && <ReadAloudButton id={id} text={content} />
+              content && !image && !isStreaming && <ReadAloudButton id={id} text={content} />
             )}
           </div>
         )}

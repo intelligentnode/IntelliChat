@@ -1,6 +1,7 @@
 import { AIProviders, envKeys, providerNames, type ProviderName, type Vendor } from '@/lib/ai-providers';
 import type { Message } from '@/lib/types';
 import type {
+  CodeSettings,
   ImagesSettings,
   PostMessagePayload,
   ProviderSettings,
@@ -22,6 +23,7 @@ export type ChatSettingsState = {
   stream: boolean;
   images: ImagesSettings;
   speech: SpeechSettings;
+  code: CodeSettings;
   envKeys: Record<Vendor, boolean>;
   // true once /api answered which keys exist in .env
   envKeysLoaded: boolean;
@@ -51,6 +53,7 @@ const initialProviders = Object.fromEntries(
 
 const initialImages: ImagesSettings = { provider: 'openai', apiKey: '' };
 const initialSpeech: SpeechSettings = { provider: 'openai', voice: 'alloy', readAloud: false, apiKey: '' };
+const initialCode: CodeSettings = { github: false, githubToken: '', localFiles: true, allowEdits: false };
 
 const initialState = {
   withContext: false,
@@ -63,6 +66,7 @@ const initialState = {
   providers: initialProviders,
   images: initialImages,
   speech: initialSpeech,
+  code: initialCode,
 };
 
 export const useChatSettings = create<ChatSettingsState>()(
@@ -120,7 +124,7 @@ export const useChatSettings = create<ChatSettingsState>()(
         ),
       name: 'chat-settings',
       // persisted settings from an older version can name models or providers that no longer exist
-      version: 3,
+      version: 4,
       migrate: (persistedState) => {
         const state = (persistedState || {}) as Partial<ChatSettingsState> & Record<string, unknown>;
         const providers = { ...initialProviders } as Record<string, ProviderSettings>;
@@ -140,6 +144,7 @@ export const useChatSettings = create<ChatSettingsState>()(
           providers: providers as SupportedProvidersType,
           images: { ...initialImages, ...(state.images || {}) },
           speech: { ...initialSpeech, ...(state.speech || {}) },
+          code: { ...initialCode, ...(state.code || {}) },
         } as ChatSettingsState;
       },
     }
