@@ -12,14 +12,20 @@ import { useChatSettings } from '@/store/chat-settings';
 import { useToast } from './ui/use-toast';
 import { supportsStreaming, supportsVision, type Vendor } from '@/lib/ai-providers';
 import { Recorder, imageToDataUrl, requestImage, speak, stopSpeaking, transcribe } from '@/lib/client';
+import { imageCommandMessage, parseCommand } from '@/lib/commands';
 import { TooltipProvider } from './ui/tooltip';
-
-const IMAGE_COMMAND = /^\/image\s+/i;
 
 // The Voice tab key also serves transcription when the speech provider is OpenAI.
 function transcriptionKey() {
   const { speech } = useChatSettings.getState();
   return speech.provider === 'openai' ? speech.apiKey : '';
+}
+
+// Image requests and generated images are not part of the conversation sent to the chat model,
+// and neither are empty replies (a reply stopped before its first word).
+function isConversation(message: Message) {
+  if (message.role === 'assistant') return Boolean(message.content.trim());
+  return !parseCommand(message.content).command;
 }
 
 export default function Chat() {
@@ -114,7 +120,9 @@ export default function Chat() {
   const sendChat = async (prompt: Message, signal: AbortSignal) => {
     const settings = getSettings();
     const streaming = settings.stream && supportsStreaming(settings.provider);
-    const history = [...messages, prompt].map(({ role, content, image }) => ({ role, content, ...(image && { image }) }));
+    const history = [...messages, prompt]
+      .filter(isConversation)
+      .map(({ role, content, image }) => ({ role, content, ...(image && { image }) }));
     const payload: PostMessagePayload = { ...settings, messages: history };
 
     const res = await fetch('/api/chat', {
@@ -145,10 +153,17 @@ export default function Chat() {
   };
 
   const onSubmit = async () => {
-    const raw = input.current?.value.trim() || '';
-    if (isLoading) return;
-    const asImage = imageMode || IMAGE_COMMAND.test(raw);
-    const text = raw.replace(IMAGE_COMMAND, '').trim();
+    if (isLoading || !input.current) return;
+    const parsed = parseCommand(input.current.value);
+    const asImage = imageMode || parsed.command === 'image';
+    const text = parsed.text.trim();
+
+    // "/image" on its own: show the command badge and wait for the description
+    if (parsed.command === 'image' && !text) {
+      input.current.value = '';
+      setImageMode(true);
+      return;
+    }
     if (!text && !attachment) return;
 
     const settings = getSettings();
@@ -159,14 +174,15 @@ export default function Chat() {
 
     const prompt: Message = {
       id: nanoid(),
-      content: asImage ? `/image ${text}` : text,
+      content: asImage ? imageCommandMessage(text) : text,
       role: 'user',
       ...(attachment && !asImage && { image: attachment.dataUrl }),
     };
     setMessage(prompt);
-    input.current!.value = '';
+    input.current.value = '';
     setAttachment(null);
     stopSpeaking();
+    if (asImage) setImageMode(true);
 
     const controller = new AbortController();
     abortController.current = controller;
@@ -180,6 +196,8 @@ export default function Chat() {
     } finally {
       setIsLoading(false);
       abortController.current = null;
+      // the image command applies to one message
+      if (asImage) setImageMode(false);
     }
   };
 
@@ -246,7 +264,7 @@ export default function Chat() {
           onSubmit={onSubmit}
           onStop={onStop}
           imageMode={imageMode}
-          onToggleImageMode={() => setImageMode((mode) => !mode)}
+          onImageModeChange={setImageMode}
           attachment={attachment}
           onAttach={onAttach}
           onClearAttachment={() => setAttachment(null)}

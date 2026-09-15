@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import ChatSettings from '@/components/chat-settings';
+import SettingsHelp from '@/components/settings-help';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 export default function SideBar({ title = 'Settings' }: { title?: string }) {
@@ -50,11 +51,14 @@ export default function SideBar({ title = 'Settings' }: { title?: string }) {
       <SheetContent
         className='flex flex-col gap-0 border-none bg-zinc-900 px-6 pb-6 pt-[calc(var(--header-height)+1rem)] sm:max-w-md'
         side='right'
+        // opening the panel does not move the focus into it, so no control shows as focused
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         {pathname === '/' && (
           <>
-            <SheetHeader className='mb-4'>
+            <SheetHeader className='mb-4 flex-row items-center justify-between space-y-0'>
               <SheetTitle>{title}</SheetTitle>
+              <SettingsHelp />
             </SheetHeader>
             <TooltipProvider>
               <ChatSettings close={() => setIsOpen(false)} />

@@ -4,6 +4,8 @@ import { Button } from './ui/button';
 import { CornerDownLeft, ImagePlus, Loader2, Mic, Paperclip, Square, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn } from '@/lib/utils';
+import { typedImageCommand } from '@/lib/commands';
+import { CommandBadge } from './command-badge';
 
 export type Attachment = {
   kind: 'image';
@@ -15,9 +17,9 @@ type Props = {
   isLoading: boolean;
   onSubmit: () => void;
   onStop: () => void;
-  // image generation mode: the prompt is sent to the image model instead of the chat model
+  // image mode: the message goes to the image model; typing "/image " at the start turns it on
   imageMode: boolean;
-  onToggleImageMode: () => void;
+  onImageModeChange: (on: boolean) => void;
   attachment: Attachment | null;
   onAttach: (file: File) => void;
   onClearAttachment: () => void;
@@ -60,17 +62,32 @@ function IconButton({ label, active, onClick, disabled, children, className }: {
 export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
   function ChatPrompt(props, ref) {
     const {
-      isLoading, onSubmit, onStop, imageMode, onToggleImageMode, attachment, onAttach, onClearAttachment,
+      isLoading, onSubmit, onStop, imageMode, onImageModeChange, attachment, onAttach, onClearAttachment,
       canRecord, isRecording, isTranscribing, onToggleRecording,
     } = props;
     const fileInput = useRef<HTMLInputElement>(null);
 
-    const onEnter = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (isLoading) return;
+    const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Backspace in an empty box removes the /image command
+      if (event.key === 'Backspace' && imageMode && !event.currentTarget.value) {
+        event.preventDefault();
+        onImageModeChange(false);
+        return;
+      }
+      if (isLoading || event.nativeEvent.isComposing) return;
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         onSubmit();
       }
+    };
+
+    // "/image " or "\image " typed at the start turns into the command badge
+    const onChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (imageMode) return;
+      const rest = typedImageCommand(event.target.value);
+      if (rest === null) return;
+      event.target.value = rest;
+      onImageModeChange(true);
     };
 
     const status = isRecording
@@ -106,9 +123,11 @@ export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
           <Textarea
             ref={ref}
             rows={1}
-            className='min-h-0 w-full resize-none py-6 pl-32 pr-24'
+            dir='auto'
+            className={cn('min-h-0 w-full resize-none py-6 pr-24', imageMode ? 'pl-[13.5rem]' : 'pl-32')}
             placeholder={imageMode ? 'Describe the image to generate' : attachment ? 'Ask about the image' : 'Send a message'}
-            onKeyDown={onEnter}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
             data-testid='prompt'
           />
           <div className='absolute left-3 top-3 flex items-center gap-1'>
@@ -124,9 +143,24 @@ export const ChatPrompt = React.forwardRef<HTMLTextAreaElement, Props>(
             >
               {isTranscribing ? <Loader2 size={18} className='animate-spin' /> : <Mic size={18} />}
             </IconButton>
-            <IconButton label={imageMode ? 'Back to chat' : 'Generate an image'} onClick={onToggleImageMode} active={imageMode} disabled={isLoading}>
-              <ImagePlus size={18} />
-            </IconButton>
+            {imageMode ? (
+              <span className='ml-1 flex h-9 items-center gap-1' data-testid='image-command'>
+                <CommandBadge className='px-2 py-1 text-sm' />
+                <button
+                  type='button'
+                  onClick={() => onImageModeChange(false)}
+                  disabled={isLoading}
+                  className='rounded p-0.5 text-zinc-400 hover:text-white disabled:opacity-50'
+                  aria-label='Remove the image command'
+                >
+                  <X size={14} />
+                </button>
+              </span>
+            ) : (
+              <IconButton label='Generate an image' onClick={() => onImageModeChange(true)} disabled={isLoading}>
+                <ImagePlus size={18} />
+              </IconButton>
+            )}
           </div>
           <input
             ref={fileInput}

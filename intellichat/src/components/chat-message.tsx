@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
-import { cn, isPrimarilyRtl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Message } from '@/lib/types';
 import { Download, Loader2, Square, Volume2 } from 'lucide-react';
 import { useChatSettings } from '@/store/chat-settings';
 import { currentlySpeaking, onSpeechChange, speak } from '@/lib/client';
+import { parseCommand, textDirection } from '@/lib/commands';
+import { CommandBadge } from './command-badge';
 import { useToast } from './ui/use-toast';
 
 type Props = Message & {
@@ -14,7 +16,7 @@ type Props = Message & {
 
 export const ChatMessage = ({ role, content, image, imagePrompt, stopped, id, isStreaming }: Props) => {
   const isUser = role === 'user';
-  const isRtl = isPrimarilyRtl(content);
+  const command = isUser ? parseCommand(content) : null;
 
   return (
     <div className={'items-top flex w-full gap-4 pb-10'} data-testid={`message-${role}`}>
@@ -37,11 +39,20 @@ export const ChatMessage = ({ role, content, image, imagePrompt, stopped, id, is
           </figure>
         )}
         {isUser ? (
-          <div className={cn('whitespace-pre-wrap break-words', isRtl && 'text-right rtl')}>{content}</div>
+          command?.command ? (
+            // the command as a badge, followed by the prompt in its own direction
+            <div className='flex flex-wrap items-center gap-2' dir={textDirection(command.text)}>
+              <CommandBadge />
+              <span className='whitespace-pre-wrap break-words'>{command.text}</span>
+            </div>
+          ) : (
+            <div className='whitespace-pre-wrap break-words' dir='auto'>{content}</div>
+          )
         ) : (
-          <div className={isRtl ? 'text-right rtl' : ''}>
+          // dir=auto: a reply that starts in Arabic reads right to left; code blocks stay left to right
+          <div dir='auto'>
             {content && (
-              <ReactMarkdown className='prose prose-invert max-w-none prose-code:whitespace-normal break-words'>
+              <ReactMarkdown className='prose prose-invert max-w-none break-words prose-code:whitespace-normal [&_pre]:[direction:ltr] [&_pre]:text-left'>
                 {content}
               </ReactMarkdown>
             )}
