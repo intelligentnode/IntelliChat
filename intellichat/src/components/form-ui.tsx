@@ -59,7 +59,7 @@ export function FormSelectField({
             >
               <SelectTrigger className={className}>
                 <SelectValue placeholder={placeholder}>
-                  {field.value}
+                  {options.find((option) => option.value === field.value)?.label ?? field.value}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

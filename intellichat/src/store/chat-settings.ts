@@ -1,14 +1,18 @@
-import { envKeys } from '@/lib/ai-providers';
+import { AIProviders, envKeys, providerNames, type ProviderName, type Vendor } from '@/lib/ai-providers';
 import type { Message } from '@/lib/types';
 import type {
+  CodeSettings,
+  ImagesSettings,
   PostMessagePayload,
+  ProviderSettings,
+  SpeechSettings,
   SupportedProvidersNamesType,
   SupportedProvidersType,
 } from '@/lib/validators';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type ChatSettingsState = {
+export type ChatSettingsState = {
   messages: Message[];
   isSidebarOpen: boolean;
   systemMessage: string;
@@ -16,60 +20,53 @@ type ChatSettingsState = {
   numberOfMessages: number;
   providers: SupportedProvidersType;
   withContext: boolean;
-  stream : boolean;
-  intellinodeData: boolean;
-  oneKey: string;
-  envKeys: Record<SupportedProvidersNamesType, boolean>;
+  stream: boolean;
+  images: ImagesSettings;
+  speech: SpeechSettings;
+  code: CodeSettings;
+  envKeys: Record<Vendor, boolean>;
+  // true once /api answered which keys exist in .env
+  envKeysLoaded: boolean;
   getModel: () => string | undefined;
   getSettings: () => Omit<PostMessagePayload, 'messages'>;
-  getProvider: () => SupportedProvidersType[SupportedProvidersNamesType];
+  getProvider: () => ProviderSettings | undefined;
   updateChatSettings: (settings: Partial<ChatSettingsState>) => void;
   toggleSidebar: () => void;
   setMessage: (message: Message) => void;
-  setOneKey: (key: string | null) => void;
-  setEnvKeys: (envKeys: Record<SupportedProvidersNamesType, boolean>) => void;
+  updateMessage: (id: string, patch: Partial<Message>) => void;
+  setEnvKeys: (envKeys: Record<Vendor, boolean>) => void;
   clearMessages: () => void;
   resetState: () => void;
 };
 
-const initialProviders: ChatSettingsState['providers'] = {
-  cohere: { name: 'cohere', model: 'command', apiKey: '' },
-  openai: { name: 'openai', model: 'gpt-4o', apiKey: '' },
-  replicate: {
-    name: 'replicate',
-    model: '70b-chat',
-    apiKey: '',
-  },
-  google: { name: 'google', model: 'gemini', apiKey: '' },
-  
-  azure: {
-    name: 'azure',
-    model: '',
-    apiKey: '',
-    resourceName: '',
-    embeddingName: '',
-  },
-  mistral: { name: 'mistral', model: 'mistral-tiny', apiKey: '' },
-  anthropic: { name: 'anthropic', model: 'claude-3-sonnet-20240229', apiKey: '' },
-  vllm: {
-    name: 'vllm',
-    model: '',
-    baseUrl: '',
-    apiKey: '',
-  },
-};
+// Default settings of every chat provider: the first model of its list, its default base URL, no key.
+export function defaultProviderSettings(name: ProviderName): ProviderSettings {
+  const config = AIProviders[name] as { models?: readonly string[]; baseUrl?: string };
+  const base = { name, model: config.models?.[0] || '', apiKey: '', baseUrl: config.baseUrl || '' };
+  if (name === 'azure') return { ...base, resourceName: '', embeddingName: '' } as ProviderSettings;
+  return base as ProviderSettings;
+}
+
+const initialProviders = Object.fromEntries(
+  providerNames.map((name) => [name, defaultProviderSettings(name)])
+) as SupportedProvidersType;
+
+const initialImages: ImagesSettings = { provider: 'openai', apiKey: '' };
+const initialSpeech: SpeechSettings = { provider: 'openai', voice: 'alloy', readAloud: false, apiKey: '' };
+const initialCode: CodeSettings = { github: false, githubToken: '', localFiles: true, allowEdits: false };
 
 const initialState = {
-  intellinodeData: false,
-  oneKey: '',
   withContext: false,
-  stream: false,
+  stream: true,
   systemMessage: '',
   provider: 'openai' as SupportedProvidersNamesType,
   numberOfMessages: 4,
-  messages: [],
+  messages: [] as Message[],
   isSidebarOpen: false,
   providers: initialProviders,
+  images: initialImages,
+  speech: initialSpeech,
+  code: initialCode,
 };
 
 export const useChatSettings = create<ChatSettingsState>()(
@@ -77,24 +74,26 @@ export const useChatSettings = create<ChatSettingsState>()(
     (set, get) => ({
       ...initialState,
       envKeys,
+      envKeysLoaded: false,
       clearMessages: () => set((state) => ({ ...state, messages: [] })),
       setMessage: (message: Message) => {
         set((state) => ({ ...state, messages: [...state.messages, message] }));
+      },
+      updateMessage: (id: string, patch: Partial<Message>) => {
+        set((state) => ({ ...state, messages: state.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
       },
       resetState: () => {
         const { messages, ...rest } = initialState;
         set((state) => ({ ...state, ...rest }));
       },
       getSettings: () => {
-        let settings: Omit<PostMessagePayload, 'messages'> = {
+        const settings: Omit<PostMessagePayload, 'messages'> = {
           provider: get().provider,
           providers: get().providers,
           systemMessage: get().systemMessage,
           n: get().numberOfMessages,
           withContext: get().withContext,
-          oneKey: get().oneKey,
-          stream :get().stream,
-          intellinodeData: get().intellinodeData,
+          stream: get().stream,
         };
         return settings;
       },
@@ -108,15 +107,8 @@ export const useChatSettings = create<ChatSettingsState>()(
         const providers = get().providers;
         return provider ? providers[provider]?.model : providers.openai?.model;
       },
-      setEnvKeys: (envKeys: Record<SupportedProvidersNamesType, boolean>) => {
-        set((state) => ({ ...state, envKeys }));
-      },
-      setOneKey: (key: string | null) => {
-        set((state) => ({
-          ...state,
-          oneKey: key ?? '',
-          intellinodeData: key !== null,
-        }));
+      setEnvKeys: (envKeys: Record<Vendor, boolean>) => {
+        set((state) => ({ ...state, envKeys: { ...state.envKeys, ...envKeys }, envKeysLoaded: true }));
       },
       updateChatSettings: (settings: Partial<ChatSettingsState>) => {
         set((state) => ({ ...state, ...settings }));
@@ -128,11 +120,33 @@ export const useChatSettings = create<ChatSettingsState>()(
     {
       partialize: (state) =>
         Object.fromEntries(
-          Object.entries(state).filter(
-            ([key]) => !['messages', 'intellinodeData'].includes(key)
-          )
+          Object.entries(state).filter(([key]) => !['messages', 'envKeys', 'envKeysLoaded'].includes(key))
         ),
       name: 'chat-settings',
+      // persisted settings from an older version can name models or providers that no longer exist
+      version: 4,
+      migrate: (persistedState) => {
+        const state = (persistedState || {}) as Partial<ChatSettingsState> & Record<string, unknown>;
+        const providers = { ...initialProviders } as Record<string, ProviderSettings>;
+        for (const [key, saved] of Object.entries(state.providers || {})) {
+          if (!saved || !(key in providers)) continue;
+          const config = AIProviders[key as ProviderName] as { models?: readonly string[]; kind: string };
+          const known = config.kind === 'cloud' ? config.models : undefined;
+          const model = known && saved.model && !known.includes(saved.model) ? known[0] : saved.model;
+          providers[key] = { ...providers[key], ...saved, model: model || providers[key].model };
+        }
+        const provider = state.provider && state.provider in providers ? state.provider : 'openai';
+        // intellicloud (one key) was removed; drop its fields
+        const { intellinodeData, oneKey, ...rest } = state;
+        return {
+          ...rest,
+          provider,
+          providers: providers as SupportedProvidersType,
+          images: { ...initialImages, ...(state.images || {}) },
+          speech: { ...initialSpeech, ...(state.speech || {}) },
+          code: { ...initialCode, ...(state.code || {}) },
+        } as ChatSettingsState;
+      },
     }
   )
 );

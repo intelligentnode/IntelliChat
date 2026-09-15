@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
 import { useChatSettings } from '@/store/chat-settings';
+import { isKeyless, type Vendor } from '@/lib/ai-providers';
 
 import {
   Sheet,
@@ -15,38 +16,30 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import ChatSettings from '@/components/chat-settings';
+import SettingsHelp from '@/components/settings-help';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { SupportedProvidersNamesType } from '@/lib/validators';
 
-export default function SideBar({ title }: { title?: string }) {
+export default function SideBar({ title = 'Settings' }: { title?: string }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const pathname = usePathname();
-  const getProvider = useChatSettings((s) => s.getProvider);
-  const intellinodeData = useChatSettings((s) => s.intellinodeData);
-  const oneKey = useChatSettings((s) => s.oneKey);
+  const provider = useChatSettings((s) => s.provider);
+  const providers = useChatSettings((s) => s.providers);
   const envKeys = useChatSettings((s) => s.envKeys);
+  const envKeysLoaded = useChatSettings((s) => s.envKeysLoaded);
 
-  // Open the settings sheet if the user has not set the API keys
+  // Open the settings when the selected provider has no key in the settings or the environment
+  // (checked once the server answered which .env keys exist)
   useEffect(() => {
-    const provider = getProvider();
-    const providerkey = provider?.apiKey;
-    const keyInState = providerkey ? providerkey.trim() : undefined;
-    const keyInEnv = provider
-      ? envKeys[provider.name as SupportedProvidersNamesType]
-      : false;
-    const keyExists = keyInState || keyInEnv;
-    const oneKeyInState = oneKey.trim();
-    const oneKeyIsEnabled = intellinodeData;
-
-    if (!keyExists && oneKeyIsEnabled && !oneKeyInState) {
-      setIsOpen(true);
-    }
-  }, [getProvider, oneKey]);
+    if (!envKeysLoaded || isKeyless(provider)) return;
+    const keyInState = providers[provider]?.apiKey?.trim();
+    const keyInEnv = envKeys[provider as Vendor];
+    if (!keyInState && !keyInEnv) setIsOpen(true);
+  }, [provider, providers, envKeys, envKeysLoaded]);
 
   return (
     <Sheet modal={false} open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
       <SheetTrigger asChild>
-        <Button variant='ghost' className='p-0 px-2'>
+        <Button variant='ghost' className='p-0 px-2' data-testid='toggle-settings'>
           {isOpen ? (
             <PanelLeftOpen className='h-6 w-6' />
           ) : (
@@ -56,13 +49,16 @@ export default function SideBar({ title }: { title?: string }) {
         </Button>
       </SheetTrigger>
       <SheetContent
-        className='border-none bg-zinc-900 px-14 pt-[calc(var(--header-height)+1rem)]'
+        className='flex flex-col gap-0 border-none bg-zinc-900 px-6 pb-6 pt-[calc(var(--header-height)+1rem)] sm:max-w-md'
         side='right'
+        // opening the panel does not move the focus into it, so no control shows as focused
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         {pathname === '/' && (
           <>
-            <SheetHeader className='mb-4'>
+            <SheetHeader className='mb-4 flex-row items-center justify-between space-y-0'>
               <SheetTitle>{title}</SheetTitle>
+              <SettingsHelp />
             </SheetHeader>
             <TooltipProvider>
               <ChatSettings close={() => setIsOpen(false)} />
