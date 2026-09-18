@@ -37,7 +37,7 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 - Generate images with the image button or `/image`.
 - Attach an image and ask about it.
 - Dictate messages with the microphone and listen to replies.
-- Write in any language, including Arabic.
+- Write in any language, including Frensh, Spanish, Arabic.
 - Code blocks with highlighting, file names, copy and download.
 - Paste a GitHub link to ask about a repo, file, issue or pull request.
 - Connect a GitHub repo, or a local folder when running locally, and the assistant reads the code, checks issues and shows each step.
@@ -48,7 +48,7 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 | <img src="assets/screenshots/chat-streaming.png" alt="Streaming reply with the Stop button" /> | <img src="assets/screenshots/image-generation.png" alt="Generated image with a download button" /> |
 | **Ask about an image** | **Voice** |
 | <img src="assets/screenshots/vision.png" alt="Question about an attached image" /> | <img src="assets/screenshots/voice.png" alt="Dictated question with the reply read aloud" /> |
-| **Arabic chat** | **Arabic image prompt** |
+| **Multi-lang chat (Arabic)** | **Multi-lang image prompt** |
 | <img src="assets/screenshots/arabic-chat.png" alt="Arabic question and reply written right to left" /> | <img src="assets/screenshots/arabic-image.png" alt="Image generated from an Arabic prompt" /> |
 | **GitHub repo** | **Local file edit** |
 | <img src="assets/screenshots/coding-repo.png" alt="The assistant reading a connected GitHub repo step by step" /> | <img src="assets/screenshots/coding-local-edit.png" alt="The assistant fixing a local file and showing the diff" /> |
