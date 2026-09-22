@@ -48,8 +48,6 @@ https://github.com/intelligentnode/IntelliChat/assets/2751950/47d7db12-e299-449f
 | <img src="assets/screenshots/chat-streaming.png" alt="Streaming reply with the Stop button" /> | <img src="assets/screenshots/image-generation.png" alt="Generated image with a download button" /> |
 | **Ask about an image** | **Voice** |
 | <img src="assets/screenshots/vision.png" alt="Question about an attached image" /> | <img src="assets/screenshots/voice.png" alt="Dictated question with the reply read aloud" /> |
-| **Multi-lang chat (Arabic)** | **Multi-lang image prompt** |
-| <img src="assets/screenshots/arabic-chat.png" alt="Arabic question and reply written right to left" /> | <img src="assets/screenshots/arabic-image.png" alt="Image generated from an Arabic prompt" /> |
 | **GitHub repo** | **Local file edit** |
 | <img src="assets/screenshots/coding-repo.png" alt="The assistant reading a connected GitHub repo step by step" /> | <img src="assets/screenshots/coding-local-edit.png" alt="The assistant fixing a local file and showing the diff" /> |
 | **Settings** | **Local models** |
